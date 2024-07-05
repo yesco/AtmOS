@@ -9,10 +9,11 @@ LASOURCES = $(wildcard libsrc/*.s)
 PROGRAM = loci.rom
 LIBRARY = loci.lib
 
-CC      = cl65
-AR      = ar65
+CC      = $(CC65_HOME)/bin/cl65
+AR      = $(CC65_HOME)/bin/ar65
 CFLAGS  =  -t $(CC65_TARGET) -O --debug-info -I ./include --asm-include-dir ./asminc -I ./asminc
 LDFLAGS =  -C cfg/loci.cfg --debug-info -m $(PROGRAM).map
+CP      = cp -f
 
 .SUFFIXES:
 .PHONY: all clean
@@ -25,7 +26,6 @@ all: $(PROGRAM)
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 $(LIBRARY): $(CC65_HOME)/lib/$(CC65_TARGET).lib $(LSOURCES:.c=.o) $(LASOURCES:.s=.o)
-	$(CP) $(CC65_HOME/lib/supervision.lib ./$(LIBRARY)
 	$(AR) a $(LIBRARY) $(LSOURCES:.c=.o) $(LASOURCES:.s=.o)
 
 $(PROGRAM): $(ASOURCES:.s=.o) $(SOURCES:.c=.o) $(LIBRARY)
