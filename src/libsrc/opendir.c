@@ -1,6 +1,6 @@
 /*
 ** Ullrich von Bassewitz, 2012-05-30. Based on code by Groepaz.
-** Sodiumlightbaby 2024 CUmini version
+** Sodiumlightbaby 2024 LOCI version
 */
 
 #include <stdlib.h>
@@ -14,11 +14,11 @@
 
 DIR* __fastcall__ opendir (register const char* name)
 {
-    unsigned i;
     int ret;
     static DIR d;
-    for (i = strlen(name); i;) {
-        mia_push_char (((char*)name)[--i]);
+    size_t namelen = strlen(name);
+    while(namelen) {
+        mia_push_char (((char*)name)[--namelen]);
     }
     ret = mia_call_int_errno (MIA_OP_OPENDIR);
     d.fd = ret;
