@@ -26,7 +26,7 @@ all: $(PROGRAM)
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 $(LIBRARY): $(CC65_HOME)/lib/$(CC65_TARGET).lib $(LSOURCES:.c=.o) $(LASOURCES:.s=.o)
-	$(AR) ar $(LIBRARY) $(LSOURCES:.c=.o) $(LASOURCES:.s=.o)
+	$(AR) a $(LIBRARY) $(LSOURCES:.c=.o) $(LASOURCES:.s=.o)
 
 $(PROGRAM): $(ASOURCES:.s=.o) $(SOURCES:.c=.o) $(LIBRARY)
 	$(CC) $(LDFLAGS) -o $@ $^

@@ -16,10 +16,6 @@ EFATFS_START := 32
 
 .code
 
-; /!\ iss: this is quick quick hack to fix compilation /!\
-.export __mappederrno
-__mappederrno:
-
 ___osmaperrno:
     cmp #EFATFS_START
     bmi @L2
