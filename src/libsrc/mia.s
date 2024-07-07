@@ -13,7 +13,7 @@
 .export _mia_call_int_errno, _mia_call_long_errno
 
 .importzp sp, sreg
-.import __mappederrno, incsp1
+.import ___mappederrno, incsp1
 
 .code
 
@@ -87,4 +87,4 @@ _mia_call_long_errno:
 
 ERROR:
     lda MIA_ERRNO
-    jmp __mappederrno
+    jmp ___mappederrno
