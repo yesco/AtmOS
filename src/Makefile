@@ -11,7 +11,7 @@ ASOURCES = display.s keyboard.s irq.s vectors.s
 LSOURCES = $(wildcard libsrc/*.c)
 LASOURCES = $(wildcard libsrc/*.s)
 
-PROGRAM = loci.rom
+PROGRAM = loci_rom
 LIBRARY = loci.lib
 
 ifneq ($(wildcard $(CC65_HOME)/bin/.*),)
@@ -28,7 +28,7 @@ CP      = cp -f
 
 .SUFFIXES:
 .PHONY: all clean
-all: $(PROGRAM)
+all: $(PROGRAM).rp6502
 
 %.o: %.c
 	$(CC) -c $(CFLAGS) -o $@ $<
@@ -37,14 +37,14 @@ all: $(PROGRAM)
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 $(LIBRARY): $(LSOURCES:.c=.o) $(LASOURCES:.s=.o)
-	$(CP) $(CC65_HOME)/lib/supervision.lib $(LIBRARY)
+	$(CP) $(CC65_HOME)/lib/$(CC65_TARGET).lib $(LIBRARY)
 	$(AR) a $(LIBRARY) $(LSOURCES:.c=.o) $(LASOURCES:.s=.o)
 
 $(PROGRAM): $(ASOURCES:.s=.o) $(SOURCES:.c=.o) $(LIBRARY)
 	$(CC) $(LDFLAGS) -o $@ $^
 
 $(PROGRAM).rp6502: $(PROGRAM)
-	../tools/rp6502.py -o $(PROGRAM).rp6052 -a 0xC000 create $(PROGRAM)
+	../tools/rp6502.py -o $(PROGRAM).rp6502 -a 0xC000 create $(PROGRAM)
 
 clean:
 	$(RM) $(SOURCES:.c=.o) $(ASOURCES:.s=.o) $(LSOURCES:.c=.o) $(LASOURCES:.s=.o) $(SOURCES:.c=.d) $(PROGRAM) $(PROGRAM).map $(PROGRAM).rp6502 $(LIBRARY)
