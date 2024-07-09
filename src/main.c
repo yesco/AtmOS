@@ -383,8 +383,8 @@ void DisplayKey(unsigned char key)
                 break;
             }
             if(calling_widget == -1){   //Return to Oric
-                //mia_set_ax(0x80 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
-                mia_set_ax(0x00 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
+                mia_set_ax(0x80 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
+                //mia_set_ax(0x00 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
                 VIA.ier = 0x7F;         //Disable VIA interrupts
                 mia_call_int_errno(MIA_OP_BOOT);
             }else{                      //Escape from popup
