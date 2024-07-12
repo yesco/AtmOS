@@ -133,11 +133,15 @@ uint8_t dir_fill(char* dname){
     }
 
     dir = opendir(dname);
-    
-    strcpy(dir_buf,"/..");
-    dir_ptr_list[-1] = dir_buf;
-    tail = 4; //strlen("/..")+1
-    dir_entries = 1;
+    if(dname[0]==0x00){     //Root/device list
+        tail = 0;
+        dir_entries = 0;
+    }else{                  //Non-root
+        strcpy(dir_buf,"/..");
+        dir_ptr_list[-1] = dir_buf;
+        tail = 4; //strlen("/..")+1
+        dir_entries = 1;
+    }
     dir_offset = 0;
     ret = 1;
     while(tail < DIR_BUF_SIZE){             //Safeguard
