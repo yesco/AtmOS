@@ -5,7 +5,7 @@
 ; Helpers for building API shims
 
 .include "loci.inc"
-
+.include "errno.inc"
 .export _mia_push_long, _mia_push_int
 .export _mia_pop_long, _mia_pop_int
 .export _mia_set_axsreg, _mia_set_ax
@@ -13,7 +13,7 @@
 .export _mia_call_int_errno, _mia_call_long_errno
 
 .importzp sp, sreg
-.import ___mappederrno, incsp1
+.import incsp1
 
 .code
 
@@ -87,4 +87,9 @@ _mia_call_long_errno:
 
 ERROR:
     lda MIA_ERRNO
+.ifdef OLD_CC65
+    jmp __mappederrno
+.else
     jmp ___mappederrno
+.endif
+

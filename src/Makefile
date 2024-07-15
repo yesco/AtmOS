@@ -26,6 +26,9 @@ CFLAGS  =  -t $(CC65_TARGET) -O --debug-info -I ./include --asm-include-dir ./as
 LDFLAGS =  -C cfg/loci.cfg --debug-info -m $(PROGRAM).map
 CP      = cp -f
 
+#CC65 has changed internal library prefix for errno related symbols. Check which one we have.
+CHECK_CC65 != CC65_HOME=$(CC65_HOME) $(CC) -c $(CFLAGS) -o .asm_check libsrc/mia.s 2>&1
+
 .SUFFIXES:
 .PHONY: all clean
 all: $(PROGRAM).rp6502
@@ -34,7 +37,11 @@ all: $(PROGRAM).rp6502
 	$(CC) -c $(CFLAGS) -o $@ $<
 
 %.o: %.s
-	$(CC) -c $(CFLAGS) -o $@ $<
+ifneq ($(strip $(CHECK_CC65)),)
+	$(CC) -c $(CFLAGS) --asm-define OLD_CC65 -o $@ $<
+else
+	$(CC) -c $(CFLAGS)  -o $@ $<
+endif
 
 $(LIBRARY): $(LSOURCES:.c=.o) $(LASOURCES:.s=.o)
 	$(CP) $(CC65_HOME)/lib/$(CC65_TARGET).lib $(LIBRARY)
@@ -47,4 +54,4 @@ $(PROGRAM).rp6502: $(PROGRAM)
 	../tools/rp6502.py -o $(PROGRAM).rp6502 -a 0xC000 create $(PROGRAM)
 
 clean:
-	$(RM) $(SOURCES:.c=.o) $(ASOURCES:.s=.o) $(LSOURCES:.c=.o) $(LASOURCES:.s=.o) $(SOURCES:.c=.d) $(PROGRAM) $(PROGRAM).map $(PROGRAM).rp6502 $(LIBRARY)
+	$(RM) $(SOURCES:.c=.o) $(ASOURCES:.s=.o) $(LSOURCES:.c=.o) $(LASOURCES:.s=.o) $(SOURCES:.c=.d) $(PROGRAM) $(PROGRAM).map $(PROGRAM).rp6502 $(LIBRARY) .asm_check
