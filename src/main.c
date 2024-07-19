@@ -407,8 +407,57 @@ void DisplayKey(unsigned char key)
         y = 0;
 }
 
+unsigned char Mouse(unsigned char key){
+    static unsigned int prev_pos = 0;
+    static signed char sx = 0, sy = 0, prev_x = 0, prev_y = 0, prev_btn = 0;
+    static uint8_t cursor = 0; 
+    
+    unsigned int pos;
+    signed char x,y,btn;
+    char *screen;
+    uint8_t widget;
+    
+    screen = (char*)(0xbb80);
+    MIA.addr0 = 0x8000;
+    MIA.step0 = 1;
+    btn = MIA.rw0;
+    x = (MIA.rw0>>2);
+    y = (MIA.rw0>>2);
+    sx = sx + (x - prev_x);
+    sy = sy + (y - prev_y);
+    if(sx > 39)
+        sx = 39;
+    if(sx < 0)
+        sx = 0;
+    if(sy > 24)
+        sy = 24;
+    if(sy < 0)
+        sy = 0;
+    pos = (40*sy) + sx;
+    if(pos != prev_pos){
+        if(cursor)
+            screen[prev_pos] ^= 0x80;
+        cursor = 1;
+        screen[pos] ^= 0x80;
+        prev_pos = pos;
+    }
+    prev_x = x;
+    prev_y = y;
+    
+    if(((btn ^ prev_btn) & btn & 0x01)){  //Left mouse button release
+        widget = tui_hit(sx,sy);
+        if(widget){
+            cursor = 0;
+            tui_set_current(widget);
+            key = KEY_SPACE;
+        }
+    } 
+    prev_btn = btn;
+    return key;
+}
+
 void main(void){
-    //xreg_mia_mouse(0x4000);
+    xreg_mia_mouse(0x8000);
     init_display();
     tui_cls(3);
     tui_draw(ui);
@@ -420,6 +469,7 @@ void main(void){
     //tui_draw_box(10,28);
     while(1){
         unsigned char key = ReadKeyNoBounce();
+        key = Mouse(key);
         if(key)
             DisplayKey(key);
         while(VIA.t1_hi);
