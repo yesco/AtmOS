@@ -49,12 +49,12 @@ tui_widget ui[] = {
     { TUI_START, 1, 0, 0, 0 },
     //{ TUI_BOX,  39,28, 0, 0 },
     { TUI_TXT,   1, 0, 40, txt_title },
-    { TUI_TXT,   1, 2,10, txt_mdisc }, { TUI_SEL, 12, 2, 6, txt_on },
+    { TUI_TXT,   1, 2,10, txt_mdisc }, { TUI_SEL, 12, 2, 6, txt_off },
     { TUI_TXT,   3, 3, 4, txt_df0 }, { TUI_SEL,   8, 3,26, txt_empty },
     { TUI_TXT,   3, 4, 4, txt_df1 }, { TUI_SEL,   8, 4,26, txt_empty },
     { TUI_TXT,   3, 5, 4, txt_df2 }, { TUI_SEL,   8, 5,26, txt_empty },
     { TUI_TXT,   3, 6, 4, txt_df3 }, { TUI_SEL,   8, 6,26, txt_empty },
-    { TUI_TXT,   1, 8,10, txt_tape },{ TUI_SEL, 12, 8, 6, txt_on },
+    { TUI_TXT,   1, 8,10, txt_tape },{ TUI_SEL, 12, 8, 6, txt_off },
     { TUI_TXT,   3, 9, 4, txt_tap }, { TUI_SEL,   8, 9,18, txt_empty },
     { TUI_TXT,   1,11,10, txt_mouse }, { TUI_SEL, 12,11, 6, txt_off },
     { TUI_TXT,  32, 0, 7, txt_usb},
@@ -233,7 +233,7 @@ struct _loci_cfg {
     uint8_t tap_on;
     uint8_t mou_on;
     uint8_t b11_on;
-} loci_cfg = { 0x01, 0x01, 0x00, 0x01 };
+} loci_cfg = { 0x00, 0x00, 0x00, 0x01 };
 
 void DisplayKey(unsigned char key)
 {
@@ -400,6 +400,15 @@ void DisplayKey(unsigned char key)
                         tui_draw_widget(calling_widget);
                         tui_set_current(calling_widget);
                         calling_widget = -1;
+                        if(drive < 4){
+                            loci_cfg.fdc_on = 0x01;
+                            tui_set_data(IDX_FDC_ON,txt_on);
+                            tui_draw_widget(IDX_FDC_ON);
+                        }else{
+                            loci_cfg.tap_on = 0x01;
+                            tui_set_data(IDX_TAP_ON,txt_on);
+                            tui_draw_widget(IDX_TAP_ON);
+                        }
                 }
             }
             break;
