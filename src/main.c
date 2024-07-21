@@ -131,7 +131,7 @@ uint8_t dir_fill(char* dname){
     DIR* dir;
     struct dirent* fil;
     uint16_t tail;     //Filename buffer tail
-    int8_t ret;
+    uint8_t ret;
     int len;
 
     if(!dir_needs_refresh){
