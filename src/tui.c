@@ -50,7 +50,8 @@ uint8_t tui_hit(uint8_t x, uint8_t y){
     int8_t local_x = x - tui_org_list[0].x;
     int8_t local_y = y - tui_org_list[0].y;
     for(i=1; tui_org_list[i].type != TUI_END; i++){
-        if( local_y == tui_org_list[i].y && 
+        if( tui_org_list[i].type >= TUI_ACTIVE &&
+            local_y == tui_org_list[i].y && 
             local_x >= tui_org_list[i].x && 
             local_x < (tui_org_list[i].len + tui_org_list[i].x)
         ){
