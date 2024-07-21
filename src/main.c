@@ -242,7 +242,7 @@ void DisplayKey(unsigned char key)
     const char* tmp_ptr;
     char* ret;
     int drive;
-    uint8_t dir_ok;
+    static uint8_t dir_ok = 1;
     screen = (char*)(0xbb80+40*20+1);
     oscreen = (char*)(0xbb80+40*21);
     //screen[0] = 16+7;
