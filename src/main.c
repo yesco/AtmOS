@@ -46,6 +46,8 @@ uint8_t dir_needs_refresh;
 #define PATH_SIZE 128
 char path[PATH_SIZE];
 
+char drv_names[5][32];
+
 tui_widget ui[] = {
     { TUI_START, 1, 0, 0, 0 },
     //{ TUI_BOX,  39,28, 0, 0 },
@@ -404,7 +406,8 @@ void DisplayKey(unsigned char key)
                         tui_clear_box(1);
                         tui_draw(ui);
                         tui_clear_txt(calling_widget);
-                        tui_set_data(calling_widget,tmp_ptr);
+                        strncpy(drv_names[drive],tmp_ptr,32);
+                        tui_set_data(calling_widget,drv_names[drive]);
                         tui_draw_widget(calling_widget);
                         tui_set_current(calling_widget);
                         calling_widget = -1;
