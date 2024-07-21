@@ -31,6 +31,7 @@ const char txt_locked[] = "!";
 const char txt_unlocked[] = "\"";
 const char txt_warn_sign[] = "\x01!\x03";
 const char txt_dir_warning[] = "Max files. Use filter";
+const char txt_boot[] = "\x13\004Boot  ";
 
 #define DIR_BUF_SIZE 2048
 char dir_buf[DIR_BUF_SIZE];
@@ -73,6 +74,7 @@ tui_widget ui[] = {
     { TUI_SEL,  38,  6, 1, txt_unlocked},
     { TUI_TXT,  37,  9, 1, txt_alt},
     { TUI_SEL,  38,  9, 1, txt_locked},
+    { TUI_SEL,  31, 27, 8, txt_boot},
     { TUI_END,   0, 0, 0, 0 }
 };
 #define IDX_FDC_ON 3
@@ -83,6 +85,7 @@ tui_widget ui[] = {
 #define IDX_TAP_ON 13
 #define IDX_TAP 15
 #define IDX_MOU_ON 17
+#define IDX_BOOT 33
 
 #define POPUP_FILE_START 6
 tui_widget popup[32] = {
@@ -326,6 +329,11 @@ void DisplayKey(unsigned char key)
                         if(!dir_ok){
                             tui_draw(warning);
                         }
+                        break;
+                    case(IDX_BOOT):
+                        mia_set_ax(0x80 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
+                        VIA.ier = 0x7F;         //Disable VIA interrupts
+                        mia_call_int_errno(MIA_OP_BOOT);
                         break;
                 }
             }else{
