@@ -300,9 +300,11 @@ void DisplayKey(unsigned char key)
                         if(loci_cfg.mou_on){
                             loci_cfg.mou_on = 0x00;
                             tui_set_data(IDX_MOU_ON,txt_off);
+                            xreg_mia_mouse(0xFFFF);
                         }else{
                             loci_cfg.mou_on = 0x01;
                             tui_set_data(IDX_MOU_ON,txt_on);
+                            xreg_mia_mouse(0x8000);
                         }
                         tui_draw_widget(IDX_MOU_ON);
                         tui_toggle_highlight(IDX_MOU_ON);
@@ -467,6 +469,9 @@ unsigned char Mouse(unsigned char key){
     uint8_t x,y,btn;
     char *screen;
     uint8_t widget;
+
+    if(!loci_cfg.mou_on)
+        return key;
     
     screen = TUI_SCREEN;
     MIA.addr0 = 0x8000;
@@ -508,7 +513,6 @@ unsigned char Mouse(unsigned char key){
 }
 
 void main(void){
-    xreg_mia_mouse(0x8000);
     init_display();
     tui_cls(3);
     tui_draw(ui);
