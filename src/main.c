@@ -7,7 +7,7 @@
 #include "libsrc/dir.h"
 #include "libsrc/dirent.h"
 
-const char txt_title[] = "Loci ROM dev " __DATE__;
+const char txt_title[] = "Loci ROM " __DATE__;
 const char txt_menu[] = "Select";
 const char txt_mdisc[] = "Microdisc";
 const char txt_df0[] = "  A:";
@@ -32,6 +32,11 @@ const char txt_unlocked[] = "\"";
 const char txt_warn_sign[] = "\x01!\x03";
 const char txt_dir_warning[] = "Max files. Use filter";
 const char txt_boot[] = "\x13\004Boot  ";
+const char txt_spinner[] = "/-\\|";
+uint8_t spin_cnt;
+
+char* dbg_status = TUI_SCREEN_XY(35,1);
+#define DBG_STATUS(fourc) strncpy(dbg_status,fourc,4)
 
 #define DIR_BUF_SIZE 2048
 char dir_buf[DIR_BUF_SIZE];
@@ -142,7 +147,7 @@ uint8_t dir_fill(char* dname){
     if(!dir_needs_refresh){
         return 1;
     }
-
+    DBG_STATUS("odir");
     dir = opendir(dname);
     if(dname[0]==0x00){     //Root/device list
         tail = 0;
@@ -155,6 +160,7 @@ uint8_t dir_fill(char* dname){
     }
     dir_offset = 0;
     ret = 1;
+    DBG_STATUS("rdir");
     while(tail < DIR_BUF_SIZE){             //Safeguard
         do {
             fil = readdir(dir);
@@ -180,7 +186,10 @@ uint8_t dir_fill(char* dname){
             tail += len + 1;
         }
     }
+    DBG_STATUS("cdir");
     closedir(dir);
+    DBG_STATUS("    ");
+
     qsort(&dir_ptr_list[-(dir_entries)], dir_entries, sizeof(char*), dir_cmp);
     dir_needs_refresh = 0;
     return ret;
@@ -335,6 +344,7 @@ void DisplayKey(unsigned char key)
                         }
                         break;
                     case(IDX_BOOT):
+                        DBG_STATUS("boot");
                         mia_set_ax(0x80 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
                         VIA.ier = 0x7F;         //Disable VIA interrupts
                         mia_call_int_errno(MIA_OP_BOOT);
@@ -440,6 +450,7 @@ void DisplayKey(unsigned char key)
                 break;
             }
             if(calling_widget == -1){   //Return to Oric
+                DBG_STATUS("BOOT");
                 mia_set_ax(0x80 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
                 //mia_set_ax(0x00 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
                 VIA.ier = 0x7F;         //Disable VIA interrupts
@@ -530,5 +541,6 @@ void main(void){
         while(VIA.t1_hi);
         while(!VIA.t1_hi);
         while(!VIA.t1_hi);
+        TUI_PUTC(39,1,txt_spinner[(++spin_cnt & 0x3)]);
     }
 }
