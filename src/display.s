@@ -8,7 +8,7 @@
 
     pha
     lda $1a
-    sta $a000
+    sta $bfdf
     pla
     rts
 
