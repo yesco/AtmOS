@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdio.h>
 #include "libsrc/dir.h"
 #include "libsrc/dirent.h"
 
@@ -33,6 +34,9 @@ const char txt_warn_sign[] = "\x01!\x03";
 const char txt_dir_warning[] = "Max files. Use filter";
 const char txt_boot[] = "\x13\004Boot  ";
 const char txt_spinner[] = "/-\\|";
+const char txt_map[] = "RV1 adjust";
+char txt_rv1[4] = "--";
+uint8_t rv1 = 15;
 uint8_t spin_cnt;
 
 char* dbg_status = TUI_SCREEN_XY(35,1);
@@ -65,6 +69,12 @@ tui_widget ui[] = {
     { TUI_TXT,   1, 8,10, txt_tape },{ TUI_SEL, 12, 8, 6, txt_off },
     { TUI_TXT,   3, 9, 4, txt_tap }, { TUI_SEL,   8, 9,18, txt_empty },
     { TUI_TXT,   1,11,10, txt_mouse }, { TUI_SEL, 12,11, 6, txt_off },
+    { TUI_TXT,   1,13,10, txt_map },
+    { TUI_TXT,  29, 13, 1, txt_alt},
+    { TUI_SEL,  30, 13, 1, txt_rew},
+    { TUI_TXT,  33, 13, 3, txt_rv1},
+    { TUI_SEL,  36, 13, 1, txt_ffw},
+
     { TUI_TXT,  32, 0, 7, txt_usb},
 
     { TUI_TXT,  29,  9, 1, txt_alt},
@@ -92,7 +102,10 @@ tui_widget ui[] = {
 #define IDX_TAP_ON 13
 #define IDX_TAP 15
 #define IDX_MOU_ON 17
-#define IDX_BOOT 33
+#define IDX_MAP_REW 20
+#define IDX_MAP_RV1 21
+#define IDX_MAP_FFW 22
+#define IDX_BOOT 38
 
 #define POPUP_FILE_START 6
 tui_widget popup[32] = {
@@ -349,6 +362,22 @@ void DisplayKey(unsigned char key)
                         VIA.ier = 0x7F;         //Disable VIA interrupts
                         mia_call_int_errno(MIA_OP_BOOT);
                         break;
+                    case(IDX_MAP_REW):
+                        if(rv1 > 0) 
+                            rv1--;
+                        DBG_STATUS("map-");
+                        sprintf(txt_rv1, "%02d", map_tune(rv1));
+                        //DBG_STATUS("    ");
+                        tui_draw_widget(IDX_MAP_RV1);
+                        break;
+                    case(IDX_MAP_FFW):
+                        if(rv1 < 31) 
+                            rv1++;
+                        DBG_STATUS("map+");
+                        sprintf(txt_rv1, "%02d", map_tune(rv1));
+                        //DBG_STATUS("    ");
+                        tui_draw_widget(IDX_MAP_RV1);
+                        break;
                 }
             }else{
                 switch(tui_get_current()){
@@ -526,6 +555,7 @@ unsigned char Mouse(unsigned char key){
 void main(void){
     init_display();
     tui_cls(3);
+    sprintf(txt_rv1,"%02d",rv1);
     tui_draw(ui);
     strncpy(path,"",128);
     dir_needs_refresh = 1;

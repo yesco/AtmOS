@@ -123,6 +123,7 @@ long __fastcall__ mia_call_long_errno (unsigned char op);
 #define MIA_OP_UMOUNT 0x91
 
 #define MIA_OP_BOOT 0xA0
+#define MIA_OP_MAPTUNE 0xA1
 
 /* C API for the operating system. */
 
@@ -137,8 +138,9 @@ int __fastcall__ write_xstack (const void* buf, unsigned count, int fildes);
 int __fastcall__ write_xram (unsigned buf, unsigned count, int fildes);
 
 int __fastcall__ mount (int drive, register const char* path,register const char* filename);
-
 int __fastcall__ umount (int drive);
+
+int __fastcall__ map_tune (unsigned char delay);
 
 /* XREG location helpers */
 
