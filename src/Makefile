@@ -6,13 +6,22 @@ export CC65_HOME = /usr/share/cc65
 endif
 
 SOURCES = main.c tui.c
-ASOURCES = display.s keyboard.s irq.s vectors.s
+ASOURCES = display.s keyboard.s irq.s vectors.s versions.s
 
 LSOURCES = $(wildcard libsrc/*.c)
 LASOURCES = $(wildcard libsrc/*.s)
 
 PROGRAM = loci_rom
 LIBRARY = loci.lib
+
+word-dot = $(word $2,$(subst ., ,$1))
+
+ifdef VERSION 
+VERDEFS = --asm-define VERMAJOR=$(call word-dot,$(VERSION),1) --asm-define VERMINOR=$(call word-dot,$(VERSION),2) --asm-define VERPATCH=$(call word-dot,$(VERSION),3)
+else
+VERDEFS = --asm-define VERMAJOR=0 --asm-define VERMINOR=0 --asm-define VERPATCH=0
+endif
+
 
 ifneq ($(wildcard $(CC65_HOME)/bin/.*),)
 CC      = $(CC65_HOME)/bin/cl65
@@ -38,9 +47,9 @@ all: $(PROGRAM).rp6502
 
 %.o: %.s
 ifneq ($(strip $(CHECK_CC65)),)
-	$(CC) -c $(CFLAGS) --asm-define OLD_CC65 -o $@ $<
+	$(CC) -c $(CFLAGS) $(VERDEFS) --asm-define OLD_CC65 -o $@ $<
 else
-	$(CC) -c $(CFLAGS)  -o $@ $<
+	$(CC) -c $(CFLAGS) $(VERDEFS) -o $@ $<
 endif
 
 $(LIBRARY): $(LSOURCES:.c=.o) $(LASOURCES:.s=.o)
