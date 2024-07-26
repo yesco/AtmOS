@@ -11,7 +11,7 @@ ASOURCES = display.s keyboard.s irq.s vectors.s versions.s
 LSOURCES = $(wildcard libsrc/*.c)
 LASOURCES = $(wildcard libsrc/*.s)
 
-PROGRAM = loci_rom
+PROGRAM = locirom
 LIBRARY = loci.lib
 
 word-dot = $(word $2,$(subst ., ,$1))
