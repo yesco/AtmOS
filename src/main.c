@@ -8,7 +8,7 @@
 #include "libsrc/dir.h"
 #include "libsrc/dirent.h"
 
-const char txt_title[] = "Loci ROM " __DATE__;
+char txt_title[40];
 const char txt_menu[] = "Select";
 const char txt_mdisc[] = "Microdisc";
 const char txt_df0[] = "  A:";
@@ -554,6 +554,14 @@ unsigned char Mouse(unsigned char key){
 
 void main(void){
     init_display();
+    #ifdef VERSION
+    sprintf(txt_title,"LOCI ROM %d.%d.%d FW %d.%d.%d",
+        locirom_version[2],locirom_version[1],locirom_version[0],
+        locifw_version[2], locifw_version[1], locifw_version[0]);
+    #else
+    sprintf(txt_title,"LOCI " __DATE__ " FW %d.%d.%d",
+        locifw_version[2], locifw_version[1], locifw_version[0]);
+    #endif
     tui_cls(3);
     sprintf(txt_rv1,"%02d",rv1);
     tui_draw(ui);
