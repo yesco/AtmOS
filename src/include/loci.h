@@ -280,4 +280,7 @@ typedef enum
     LFS_ERR_NAMETOOLONG = 128 + 36   // File name too long
 } LFS_RESULT;
 
+extern unsigned char locirom_version[3];
+extern unsigned char locifw_version[3];
+
 #endif /* _LOCI_H */

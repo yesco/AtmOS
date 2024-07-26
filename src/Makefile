@@ -17,7 +17,9 @@ LIBRARY = loci.lib
 word-dot = $(word $2,$(subst ., ,$1))
 
 ifdef VERSION 
-VERDEFS = --asm-define VERMAJOR=$(call word-dot,$(VERSION),1) --asm-define VERMINOR=$(call word-dot,$(VERSION),2) --asm-define VERPATCH=$(call word-dot,$(VERSION),3)
+export VERSION
+CFLAGS = -D VERSION
+VERDEFS = --asm-define VERSION --asm-define VERMAJOR=$(call word-dot,$(VERSION),1) --asm-define VERMINOR=$(call word-dot,$(VERSION),2) --asm-define VERPATCH=$(call word-dot,$(VERSION),3)
 else
 VERDEFS = --asm-define VERMAJOR=0 --asm-define VERMINOR=0 --asm-define VERPATCH=0
 endif
@@ -31,7 +33,7 @@ CC      = cl65
 AR      = ar65
 endif
 
-CFLAGS  =  -t $(CC65_TARGET) -O --debug-info -I ./include --asm-include-dir ./asminc -I ./asminc
+CFLAGS  +=  -t $(CC65_TARGET) -O --debug-info -I ./include --asm-include-dir ./asminc -I ./asminc
 LDFLAGS =  -C cfg/loci.cfg --debug-info -m $(PROGRAM).map
 CP      = cp -f
 
