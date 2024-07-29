@@ -36,7 +36,7 @@ const char txt_boot[] = "\x13\004Boot  ";
 const char txt_spinner[] = "/-\\|";
 const char txt_map[] = "RV1 adjust";
 char txt_rv1[4] = "--";
-uint8_t rv1 = 15;
+uint8_t rv1 = 99;
 uint8_t spin_cnt;
 
 char* dbg_status = TUI_SCREEN_XY(35,1);
@@ -366,7 +366,8 @@ void DisplayKey(unsigned char key)
                         if(rv1 > 0) 
                             rv1--;
                         DBG_STATUS("map-");
-                        sprintf(txt_rv1, "%02d", map_tune(rv1));
+                        rv1 = map_tune(rv1);
+                        sprintf(txt_rv1, "%02d", rv1);
                         //DBG_STATUS("    ");
                         tui_draw_widget(IDX_MAP_RV1);
                         break;
@@ -374,7 +375,8 @@ void DisplayKey(unsigned char key)
                         if(rv1 < 31) 
                             rv1++;
                         DBG_STATUS("map+");
-                        sprintf(txt_rv1, "%02d", map_tune(rv1));
+                        rv1 = map_tune(rv1);
+                        sprintf(txt_rv1, "%02d", rv1);
                         //DBG_STATUS("    ");
                         tui_draw_widget(IDX_MAP_RV1);
                         break;
