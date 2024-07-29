@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include "libsrc/dir.h"
 #include "libsrc/dirent.h"
+#include "strisquint.h"
 
 char txt_title[40];
 const char txt_menu[] = "Select";
@@ -36,6 +37,8 @@ const char txt_boot[] = "\x13\004Boot  ";
 const char txt_spinner[] = "/-\\|";
 const char txt_map[] = "RV1 adjust";
 char txt_rv1[4] = "--";
+char filter[8] = ".dsk";
+
 uint8_t rv1 = 99;
 uint8_t spin_cnt;
 
@@ -187,6 +190,12 @@ uint8_t dir_fill(char* dname){
         }else if(fil->d_attrib & DIR_ATTR_SYS){
             dir_buf[tail++] = '[';
         }else{
+            if(filter[0]){
+                if(!strisquint(fil->d_name, filter)){
+                    dir_entries--;  //roll-back
+                    continue;       //next file
+                }
+            }
             dir_buf[tail++] = ' ';
         }
         len = strlen(fil->d_name);
@@ -349,6 +358,10 @@ void DisplayKey(unsigned char key)
                     case(IDX_TAP):
                         calling_widget = tui_get_current();
                         tui_toggle_highlight(calling_widget);
+                        if(calling_widget <= IDX_DF3)
+                            strcpy(filter,".dsk");
+                        else
+                            strcpy(filter,".tap");
                         dir_ok = dir_fill(path);
                         parse_files_to_widget();
                         tui_draw(popup);
@@ -468,7 +481,12 @@ void DisplayKey(unsigned char key)
             break;
         case(KEY_RETURN):
             screen[y++] = 0x00;
-            dir_fill(screen);
+            //dir_fill(screen);
+            if(strisquint(screen,filter)){
+                DBG_STATUS("HIT ");
+            }else{
+                DBG_STATUS("MISS");
+            }
             //write(STDOUT_FILENO, screen, y);
             //write(STDOUT_FILENO, '\n', 1);
             //read(STDIN_FILENO, oscreen, 280);

@@ -5,7 +5,7 @@ $(warning CC65_HOME not set. Defaulting to /usr/share/cc65)
 export CC65_HOME = /usr/share/cc65
 endif
 
-SOURCES = main.c tui.c
+SOURCES = main.c tui.c strisquint.c
 ASOURCES = display.s keyboard.s irq.s vectors.s versions.s
 
 LSOURCES = $(wildcard libsrc/*.c)
