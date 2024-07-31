@@ -578,9 +578,6 @@ void main(void){
         key = Mouse(key);
         if(key)
             DisplayKey(key);
-        while(VIA.t1_hi);
-        while(!VIA.t1_hi);
-        while(!VIA.t1_hi);
-        TUI_PUTC(39,1,txt_spinner[(++spin_cnt & 0x3)]);
+        TUI_PUTC(39,1,txt_spinner[(VIA.t1_hi >> 6)]);
     }
 }
