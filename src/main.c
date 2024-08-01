@@ -616,9 +616,9 @@ unsigned char Mouse(unsigned char key){
         cursor = 1;
         screen[pos] ^= 0x80;
         prev_pos = pos;
+        prev_x = x;
+        prev_y = y;
     }
-    prev_x = x;
-    prev_y = y;
     
     if(((btn ^ prev_btn) & btn & 0x01)){  //Left mouse button release
         widget = tui_hit(sx,sy);
