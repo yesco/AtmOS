@@ -36,8 +36,9 @@ const char txt_dir_warning[] = "Max files. Use filter";
 const char txt_boot[] = "\x13\004Boot  ";
 const char txt_spinner[] = "/-\\|";
 const char txt_map[] = "RV1 adjust";
+const char txt_filter[] = "[      ]";
 char txt_rv1[4] = "--";
-char filter[8] = ".dsk";
+char filter[6] = ".dsk";
 
 uint8_t rv1 = 99;
 uint8_t spin_cnt;
@@ -110,21 +111,22 @@ tui_widget ui[] = {
 #define IDX_MAP_FFW 22
 #define IDX_BOOT 38
 
-#define POPUP_FILE_START 7
-tui_widget popup[32] = {
+#define POPUP_FILE_START 8
+tui_widget popup[POPUP_FILE_START+DIR_PAGE_SIZE+1] = {
     { TUI_START, 2, 2, 0, 0 },
     { TUI_BOX,  35,26, 0, 0 },
-    { TUI_TXT,   1, 0,30, path},
+    { TUI_TXT,   1, 0,22, path},
+    { TUI_TXT,  23, 0, 8, txt_filter},
+    { TUI_INP,  24, 0, 6, filter},
     { TUI_SEL,  31, 0, 3, txt_x},
-    { TUI_INP,   1,25, 8, filter},
     { TUI_TXT,  30,25, 1, dir_lpage},
     { TUI_TXT,  31,25, 1, dir_rpage},
     { TUI_END,   0, 0, 0, 0 }
 };
-#define IDX_XPAGE 3
 #define IDX_FILTER 4
-#define IDX_LPAGE 5
-#define IDX_RPAGE 6
+#define IDX_XPAGE 5
+#define IDX_LPAGE 6
+#define IDX_RPAGE 7
 
 tui_widget warning[] = {
     { TUI_START, 4,10, 0, 0},
@@ -297,6 +299,7 @@ void DisplayKey(unsigned char key)
                 if(len){
                     tmp_ptr[len-1] = '\0';
                     tui_draw_widget(idx);
+                    tui_toggle_highlight(idx);
                 }
             }else{
                 screen[0 + --y] = ' ';
