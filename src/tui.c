@@ -1,4 +1,5 @@
 #include "tui.h"
+#include <string.h>
 
 
 static tui_widget *tui_org_list;
@@ -17,6 +18,7 @@ void tui_draw(tui_widget* list){
             case TUI_INV:
             case TUI_SEL:
             case TUI_BTN:
+            case TUI_INP:
                 tui_draw_widget(i);
                 break;
             case TUI_END:
@@ -41,6 +43,9 @@ void tui_draw_widget(uint8_t widget_idx){
         case TUI_BTN:
             tui_draw_txt(list[widget_idx].x, list[widget_idx].y, (char *)list[widget_idx].data, list[widget_idx].len);
             tui_toggle_highlight(widget_idx);
+        case TUI_INP:
+            tui_clear_txt(widget_idx);
+            tui_draw_txt(list[widget_idx].x, list[widget_idx].y, (char *)list[widget_idx].data, list[widget_idx].len);
             break;
     }
 }
@@ -129,8 +134,18 @@ void tui_toggle_highlight(uint8_t widget_idx){
     unsigned char i;
     if(widget->type < TUI_ACTIVE) return; //Ignore passive widgets
     scr_widget = TUI_SCREEN_XY(tui_org_list->x + widget->x, tui_org_list->y + widget->y);
-    for(i=0;i<widget->len;i++){
-        scr_widget[i] ^= 0x80;  //Toggle invert bit
+    if(widget->type == TUI_INP){
+        scr_widget += strlen(widget->data);
+        if(scr_widget[0] == ' '){
+            scr_widget[0] ^= 0x80;
+        }
+        else{
+            scr_widget[0] = ' ';
+        } 
+    }else{
+        for(i=0;i<widget->len;i++){
+            scr_widget[i] ^= 0x80;  //Toggle invert bit
+        }
     }
 }
 
@@ -149,6 +164,12 @@ void tui_set_data(uint8_t widget_idx, const char* data){
 }
 const char* tui_get_data(uint8_t widget_idx){
     return tui_org_list[widget_idx].data;
+}
+enum tui_type tui_get_type(uint8_t widget_idx){
+    return tui_org_list[widget_idx].type;
+}
+unsigned char tui_get_len(uint8_t widget_idx){
+    return tui_org_list[widget_idx].len;
 }
 
 void tui_next_active(void){

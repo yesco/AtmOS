@@ -29,7 +29,8 @@ enum tui_type {
     TUI_INV,
     //Active widgets
     TUI_SEL = TUI_ACTIVE,       //TXT but selectable
-    TUI_BTN             //SEL but reversed paper/ink
+    TUI_BTN,                    //SEL but reversed paper/ink
+    TUI_INP,                    //INPut field
 };
 
 struct _tui_widget {
@@ -50,6 +51,8 @@ void tui_set_current(uint8_t widget_idx);
 uint8_t tui_get_current(void);
 void tui_set_data(uint8_t widget_idx, const char* data);
 const char* tui_get_data(uint8_t widget_idx);
+enum tui_type tui_get_type(uint8_t widget_idx);
+unsigned char tui_get_len(uint8_t widget_idx);
 
 void tui_draw_clr(uint8_t w, uint8_t h);
 void tui_draw_box(unsigned char w, unsigned char h);
