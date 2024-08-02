@@ -574,8 +574,43 @@ void DisplayKey(unsigned char key)
                     tui_draw_widget(idx);
                     tui_toggle_highlight(idx);
                 }
-            }else{
-                screen[ 0 + y++] = key;
+            }else{  
+                //Main menu keyboard shortcuts
+                if(calling_widget == -1){
+                    switch(key){
+                        case('a'):
+                            tui_set_current(IDX_DF0);
+                            break;
+                        case('b'):
+                            tui_set_current(IDX_DF1);
+                            break;
+                        case('c'):
+                            tui_set_current(IDX_DF2);
+                            break;
+                        case('d'):
+                            tui_set_current(IDX_DF3);
+                            break;
+                        case('t'):
+                            tui_set_current(IDX_TAP);
+                            break;
+                        case('m'):
+                            tui_set_current(IDX_MOU_ON);
+                            break;
+                        case('r'):
+                            tui_set_current(IDX_MAP_REW);
+                            break;
+                    }
+                }else{  
+                    //Directory popup keyboard shortcuts
+                    if(dir_ok){
+                        switch(key){
+                            case('f'):
+                                tui_set_current(IDX_FILTER);
+                                break;
+                        }
+                    }
+                }
+                //screen[ 0 + y++] = key;
             }
     }
 
