@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include "libsrc/dir.h"
 #include "libsrc/dirent.h"
+#include "strisquint.h"
 
 char txt_title[40];
 const char txt_menu[] = "Select";
@@ -35,7 +36,10 @@ const char txt_dir_warning[] = "Max files. Use filter";
 const char txt_boot[] = "\x13\004Boot  ";
 const char txt_spinner[] = "/-\\|";
 const char txt_map[] = "RV1 adjust";
+const char txt_filter[] = "[      ]";
 char txt_rv1[4] = "--";
+char filter[6] = ".dsk";
+
 uint8_t rv1 = 99;
 uint8_t spin_cnt;
 
@@ -107,19 +111,22 @@ tui_widget ui[] = {
 #define IDX_MAP_FFW 22
 #define IDX_BOOT 38
 
-#define POPUP_FILE_START 6
-tui_widget popup[32] = {
+#define POPUP_FILE_START 8
+tui_widget popup[POPUP_FILE_START+DIR_PAGE_SIZE+1] = {
     { TUI_START, 2, 2, 0, 0 },
     { TUI_BOX,  35,26, 0, 0 },
-    { TUI_TXT,   1, 0,30, path},
+    { TUI_TXT,   1, 0,22, path},
+    { TUI_TXT,  23, 0, 8, txt_filter},
+    { TUI_INP,  24, 0, 6, filter},
     { TUI_SEL,  31, 0, 3, txt_x},
     { TUI_TXT,  30,25, 1, dir_lpage},
     { TUI_TXT,  31,25, 1, dir_rpage},
     { TUI_END,   0, 0, 0, 0 }
 };
-#define IDX_XPAGE 3
-#define IDX_LPAGE 4
-#define IDX_RPAGE 5
+#define IDX_FILTER 4
+#define IDX_XPAGE 5
+#define IDX_LPAGE 6
+#define IDX_RPAGE 7
 
 tui_widget warning[] = {
     { TUI_START, 4,10, 0, 0},
@@ -158,7 +165,7 @@ uint8_t dir_fill(char* dname){
     int len;
 
     if(!dir_needs_refresh){
-        return 1;
+    //    return 1;
     }
     DBG_STATUS("odir");
     dir = opendir(dname);
@@ -187,6 +194,12 @@ uint8_t dir_fill(char* dname){
         }else if(fil->d_attrib & DIR_ATTR_SYS){
             dir_buf[tail++] = '[';
         }else{
+            if(filter[0]){
+                if(!strisquint(fil->d_name, filter)){
+                    dir_entries--;  //roll-back
+                    continue;       //next file
+                }
+            }
             dir_buf[tail++] = ' ';
         }
         len = strlen(fil->d_name);
@@ -266,17 +279,31 @@ void DisplayKey(unsigned char key)
 {
     static unsigned char y = 0;
     char* screen, oscreen;
-    const char* tmp_ptr;
+    char* tmp_ptr;
     char* ret;
     int drive;
     static uint8_t dir_ok = 1;
+    uint8_t idx;
+    uint8_t len;
+
     screen = (char*)(0xbb80+40*20+1);
     oscreen = (char*)(0xbb80+40*21);
     //screen[0] = 16+7;
     //screen[1] = 0+4;
     switch(key){
         case(KEY_DELETE):
-            screen[0 + --y] = ' ';
+            idx = tui_get_current();
+            if(tui_get_type(idx) == TUI_INP){
+                tmp_ptr = (char*)tui_get_data(idx);
+                len = strlen(tmp_ptr);
+                if(len){
+                    tmp_ptr[len-1] = '\0';
+                    tui_draw_widget(idx);
+                    tui_toggle_highlight(idx);
+                }
+            }else{
+                screen[0 + --y] = ' ';
+            }
             break;
         case(KEY_UP):
             tui_prev_active();
@@ -286,6 +313,8 @@ void DisplayKey(unsigned char key)
                 dir_offset -= DIR_PAGE_SIZE;
                 parse_files_to_widget();
                 tui_draw(popup);
+                if(dir_entries)
+                    tui_set_current(POPUP_FILE_START);
             }
             break;
         case(KEY_DOWN):
@@ -296,13 +325,17 @@ void DisplayKey(unsigned char key)
                 dir_offset += DIR_PAGE_SIZE;
                 parse_files_to_widget();
                 tui_draw(popup);
+                if(dir_entries)
+                    tui_set_current(POPUP_FILE_START);
             }
             break;
         case(KEY_SPACE):
-            if(!dir_ok){
+            //Exit from warning
+            if(!dir_ok){    
                 dir_ok = 1;
                 tui_clear_box(1);
                 tui_draw(popup);
+                tui_set_current(POPUP_FILE_START);
                 break;
             }
             if(calling_widget == -1){
@@ -349,9 +382,16 @@ void DisplayKey(unsigned char key)
                     case(IDX_TAP):
                         calling_widget = tui_get_current();
                         tui_toggle_highlight(calling_widget);
+                        if(calling_widget <= IDX_DF3)
+                            strcpy(filter,".dsk");
+                        else
+                            strcpy(filter,".tap");
                         dir_ok = dir_fill(path);
                         parse_files_to_widget();
                         tui_draw(popup);
+                        if(dir_entries)
+                            tui_set_current(POPUP_FILE_START);
+
                         if(!dir_ok){
                             tui_draw(warning);
                         }
@@ -394,15 +434,29 @@ void DisplayKey(unsigned char key)
                         dir_offset -= DIR_PAGE_SIZE;
                         parse_files_to_widget();
                         tui_draw(popup);
+                        if(dir_entries)
+                            tui_set_current(POPUP_FILE_START);
                         break;
                     case(IDX_RPAGE):
                         dir_offset += DIR_PAGE_SIZE;
                         parse_files_to_widget();
                         tui_draw(popup);
+                        if(dir_entries)
+                            tui_set_current(POPUP_FILE_START);
+                        break;
+                    case(IDX_FILTER):
+                        tmp_ptr = (char*)tui_get_data(idx);
+                        len = strlen(tmp_ptr);
+                        if(len < (tui_get_len(idx)-1)){
+                            tmp_ptr[len] = key;
+                            tmp_ptr[len+1] = '\0';
+                            tui_draw_widget(idx);
+                            tui_toggle_highlight(idx);
+                        }
                         break;
                     default:
                         //Selection from the list
-                        tmp_ptr = tui_get_data(tui_get_current());
+                        tmp_ptr = (char*)tui_get_data(tui_get_current());
                         if(tmp_ptr[0]=='/' || tmp_ptr[0]=='['){    //Directory or device selection
                             if(tmp_ptr[0]=='['){
                                 path[0] = tmp_ptr[1];
@@ -421,6 +475,8 @@ void DisplayKey(unsigned char key)
                             dir_ok = dir_fill(path);
                             parse_files_to_widget();
                             tui_draw(popup);
+                            if(dir_entries)
+                                tui_set_current(POPUP_FILE_START);
                             if(!dir_ok){
                                 tui_draw(warning);
                             }
@@ -467,8 +523,21 @@ void DisplayKey(unsigned char key)
             }
             break;
         case(KEY_RETURN):
-            screen[y++] = 0x00;
-            dir_fill(screen);
+            if(tui_get_type(tui_get_current()) == TUI_INP){
+                dir_ok = dir_fill(path);
+                parse_files_to_widget();
+                tui_draw(popup);
+                if(!dir_ok){
+                    tui_draw(warning);
+                }
+            }
+            //screen[y++] = 0x00;
+            //dir_fill(screen);
+            //if(strisquint(screen,filter)){
+            //    DBG_STATUS("HIT ");
+            //}else{
+            //    DBG_STATUS("MISS");
+            //}
             //write(STDOUT_FILENO, screen, y);
             //write(STDOUT_FILENO, '\n', 1);
             //read(STDIN_FILENO, oscreen, 280);
@@ -495,7 +564,19 @@ void DisplayKey(unsigned char key)
             break;
 
         default:
-            screen[ 0 + y++] = key;
+            idx = tui_get_current();
+            if(tui_get_type(idx) == TUI_INP){
+                tmp_ptr = (char*)tui_get_data(idx);
+                len = strlen(tmp_ptr);
+                if(len < (tui_get_len(idx)-1)){
+                    tmp_ptr[len] = key;
+                    tmp_ptr[len+1] = '\0';
+                    tui_draw_widget(idx);
+                    tui_toggle_highlight(idx);
+                }
+            }else{
+                screen[ 0 + y++] = key;
+            }
     }
 
     if(y>35) 
@@ -538,9 +619,9 @@ unsigned char Mouse(unsigned char key){
         cursor = 1;
         screen[pos] ^= 0x80;
         prev_pos = pos;
+        prev_x = x;
+        prev_y = y;
     }
-    prev_x = x;
-    prev_y = y;
     
     if(((btn ^ prev_btn) & btn & 0x01)){  //Left mouse button release
         widget = tui_hit(sx,sy);
