@@ -123,7 +123,11 @@ long __fastcall__ mia_call_long_errno (unsigned char op);
 #define MIA_OP_UMOUNT 0x91
 
 #define MIA_OP_BOOT 0xA0
-#define MIA_OP_MAPTUNE 0xA1
+#define MIA_OP_TUNE_TMAP 0xA1
+#define MIA_OP_TUNE_TIOR 0xA2
+#define MIA_OP_TUNE_TIOW 0xA3
+#define MIA_OP_TUNE_TIOD 0xA4
+#define MIA_OP_TUNE_TADR 0xA5
 
 /* C API for the operating system. */
 
@@ -140,7 +144,11 @@ int __fastcall__ write_xram (unsigned buf, unsigned count, int fildes);
 int __fastcall__ mount (int drive, register const char* path,register const char* filename);
 int __fastcall__ umount (int drive);
 
-int __fastcall__ map_tune (unsigned char delay);
+int __fastcall__ tune_tmap (unsigned char delay);
+int __fastcall__ tune_tior (unsigned char delay);
+int __fastcall__ tune_tiow (unsigned char delay);
+int __fastcall__ tune_tiod (unsigned char delay);
+int __fastcall__ tune_tadr (unsigned char delay);
 
 /* XREG location helpers */
 
@@ -282,5 +290,11 @@ typedef enum
 
 extern unsigned char locirom_version[3];
 extern unsigned char locifw_version[3];
+
+extern unsigned char loci_tmap;
+extern unsigned char loci_tior;
+extern unsigned char loci_tiow;
+extern unsigned char loci_tiod;
+extern unsigned char loci_tadr;
 
 #endif /* _LOCI_H */
