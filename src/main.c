@@ -36,11 +36,17 @@ const char txt_dir_warning[] = "Max files. Use filter";
 const char txt_boot[] = "\x13\004Boot  ";
 const char txt_spinner[] = "/-\\|";
 const char txt_map[] = "RV1 adjust";
+const char txt_timing[] = "Timing";
 const char txt_filter[] = "[      ]";
-char txt_rv1[4] = "--";
+char txt_rv1[] = "--";
+char txt_tior[] = "tior --";
+char txt_tiow[] = "tiow --";
+char txt_tiod[] = "tiod --";
+char txt_tadr[] = "tadr --";
+
 char filter[6] = ".dsk";
 
-uint8_t rv1 = 99;
+uint8_t rv1;
 uint8_t spin_cnt;
 
 char* dbg_status = TUI_SCREEN_XY(35,1);
@@ -96,6 +102,13 @@ tui_widget ui[] = {
     { TUI_TXT,  37,  9, 1, txt_alt},
     { TUI_SEL,  38,  9, 1, txt_locked},
     { TUI_SEL,  31, 27, 8, txt_boot},
+
+    { TUI_TXT,   1, 15, 8, txt_timing},
+    { TUI_TXT,  30, 15, 8, txt_tior},
+    { TUI_TXT,  30, 16, 8, txt_tiow},
+    { TUI_TXT,  30, 17, 8, txt_tiod},
+    { TUI_TXT,  30, 18, 8, txt_tadr},
+
     { TUI_END,   0, 0, 0, 0 }
 };
 #define IDX_FDC_ON 3
@@ -287,7 +300,7 @@ void DisplayKey(unsigned char key)
     uint8_t len;
 
     screen = (char*)(0xbb80+40*20+1);
-    oscreen = (char*)(0xbb80+40*21);
+    //oscreen = (char*)(0xbb80+40*21);
     //screen[0] = 16+7;
     //screen[1] = 0+4;
     switch(key){
@@ -406,7 +419,7 @@ void DisplayKey(unsigned char key)
                         if(rv1 > 0) 
                             rv1--;
                         DBG_STATUS("map-");
-                        rv1 = map_tune(rv1);
+                        rv1 = tune_tmap(rv1);
                         sprintf(txt_rv1, "%02d", rv1);
                         //DBG_STATUS("    ");
                         tui_draw_widget(IDX_MAP_RV1);
@@ -415,7 +428,7 @@ void DisplayKey(unsigned char key)
                         if(rv1 < 31) 
                             rv1++;
                         DBG_STATUS("map+");
-                        rv1 = map_tune(rv1);
+                        rv1 = tune_tmap(rv1);
                         sprintf(txt_rv1, "%02d", rv1);
                         //DBG_STATUS("    ");
                         tui_draw_widget(IDX_MAP_RV1);
@@ -681,7 +694,12 @@ void main(void){
         locifw_version[2], locifw_version[1], locifw_version[0]);
     #endif
     tui_cls(3);
+    rv1 = loci_tmap;
     sprintf(txt_rv1,"%02d",rv1);
+    sprintf(&txt_tior[5],"%02d",loci_tior);
+    sprintf(&txt_tiow[5],"%02d",loci_tiow);
+    sprintf(&txt_tiod[5],"%02d",loci_tiod);
+    sprintf(&txt_tadr[5],"%02d",loci_tadr);
     tui_draw(ui);
     strncpy(path,"",128);
     dir_needs_refresh = 1;
