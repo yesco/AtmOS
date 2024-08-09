@@ -11,6 +11,7 @@
 .export _mia_set_axsreg, _mia_set_ax
 .export _mia_call_int, _mia_call_long
 .export _mia_call_int_errno, _mia_call_long_errno
+.export _mia_call_void
 
 .importzp sp, sreg
 .import incsp1
@@ -83,6 +84,11 @@ _mia_call_int_errno:
 _mia_call_long_errno:
     jsr _mia_call_long
     bmi ERROR
+    rts
+
+; void __fastcall__ mia_call_void(unsigned char op);
+_mia_call_void:
+    sta MIA_OP
     rts
 
 ERROR:

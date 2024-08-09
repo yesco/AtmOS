@@ -67,6 +67,9 @@ char path[PATH_SIZE];
 
 char drv_names[5][32];
 
+uint8_t auto_tune_tior(void);
+
+
 tui_widget ui[] = {
     { TUI_START, 1, 0, 0, 0 },
     //{ TUI_BOX,  39,28, 0, 0 },
@@ -612,6 +615,9 @@ void DisplayKey(unsigned char key)
                         case('r'):
                             tui_set_current(IDX_MAP_REW);
                             break;
+                        case('s'):
+                            auto_tune_tior();
+                            break;
                     }
                 }else{  
                     //Directory popup keyboard shortcuts
@@ -681,6 +687,24 @@ unsigned char Mouse(unsigned char key){
     } 
     prev_btn = btn;
     return key;
+}
+
+uint8_t auto_tune_tior(void){
+    uint8_t i, ch;
+    tune_scan_enable();
+    for(i=0; i<32; i++)
+        TUI_PUTC(2+i,25,18);
+    TUI_PUTC(2+32,25,16);
+    while(!(loci_tior & 0x80)){}    //Wait for scan to begin
+    while(!!(loci_tior & 0x80)){    //Scanning in progress
+        i = loci_tior & 0x7F;      //Using tior value as test pattern and map index
+        mia_push_char(i);
+        mia_push_char('A');
+        ch = mia_pop_char();        //Assignment needed to force read
+        if(mia_pop_char() != i)
+            TUI_PUTC(2+i,25,17);
+    }
+    return ch;
 }
 
 void main(void){

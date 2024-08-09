@@ -86,6 +86,7 @@ void __fastcall__ mia_set_ax (unsigned int ax);
 
 int __fastcall__ mia_call_int (unsigned char op);
 long __fastcall__ mia_call_long (unsigned char op);
+void __fastcall__ mia_call_void (unsigned char op);
 
 /* These run _mappederrno() on error */
 
@@ -128,6 +129,7 @@ long __fastcall__ mia_call_long_errno (unsigned char op);
 #define MIA_OP_TUNE_TIOW 0xA3
 #define MIA_OP_TUNE_TIOD 0xA4
 #define MIA_OP_TUNE_TADR 0xA5
+#define MIA_OP_TUNE_SCAN 0xA6
 
 /* C API for the operating system. */
 
@@ -149,6 +151,7 @@ int __fastcall__ tune_tior (unsigned char delay);
 int __fastcall__ tune_tiow (unsigned char delay);
 int __fastcall__ tune_tiod (unsigned char delay);
 int __fastcall__ tune_tadr (unsigned char delay);
+void __fastcall__ tune_scan_enable (void);
 
 /* XREG location helpers */
 
