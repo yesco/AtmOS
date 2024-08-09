@@ -26,3 +26,8 @@ int __fastcall__ tune_tadr (unsigned char delay)
     mia_set_ax (delay);
     return mia_call_int_errno (MIA_OP_TUNE_TADR);
 }
+
+void __fastcall__ tune_scan_enable (void)
+{
+    mia_call_void(MIA_OP_TUNE_SCAN);
+}
