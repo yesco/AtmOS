@@ -126,6 +126,7 @@ tui_widget ui[] = {
 #define IDX_MAP_RV1 21
 #define IDX_MAP_FFW 22
 #define IDX_BOOT 38
+#define IDX_TIOR 40
 
 #define POPUP_FILE_START 8
 tui_widget popup[POPUP_FILE_START+DIR_PAGE_SIZE+1] = {
@@ -616,7 +617,8 @@ void DisplayKey(unsigned char key)
                             tui_set_current(IDX_MAP_REW);
                             break;
                         case('s'):
-                            auto_tune_tior();
+                            sprintf(&txt_tior[5],"%02d",auto_tune_tior());
+                            tui_draw_widget(IDX_TIOR);
                             break;
                     }
                 }else{  
@@ -690,7 +692,8 @@ unsigned char Mouse(unsigned char key){
 }
 
 uint8_t auto_tune_tior(void){
-    uint8_t i, ch;
+    uint8_t i;
+    static uint8_t ch;
     tune_scan_enable();
     for(i=0; i<32; i++)
         TUI_PUTC(2+i,25,18);
@@ -704,7 +707,10 @@ uint8_t auto_tune_tior(void){
         if(mia_pop_char() != i)
             TUI_PUTC(2+i,25,17);
     }
-    return ch;
+    i = (uint8_t)(strstr(TUI_SCREEN_XY(2, 25), "\x12\x12\x12\x12") - TUI_SCREEN_XY(2, 25) + 4);
+    TUI_PUTC(2+i, 24, 'v');
+    tune_tior(i);
+    return i;
 }
 
 void main(void){
