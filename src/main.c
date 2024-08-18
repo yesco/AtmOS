@@ -9,6 +9,9 @@
 #include "libsrc/dirent.h"
 #include "strisquint.h"
 
+extern uint8_t irq_ticks;
+#pragma zpsym ("irq_ticks")
+
 char txt_title[40];
 const char txt_menu[] = "Select";
 const char txt_mdisc[] = "Microdisc";
@@ -694,13 +697,19 @@ unsigned char Mouse(unsigned char key){
 uint8_t auto_tune_tior(void){
     uint8_t i;
     static uint8_t ch;
-    tune_scan_enable();
+    DBG_STATUS("    ");
     for(i=0; i<32; i++)
         TUI_PUTC(2+i,25,18);
     TUI_PUTC(2+32,25,16);
+    TUI_PUTC(2+33,25,0);
+    tune_scan_enable();
     while(!(loci_tior & 0x80)){}    //Wait for scan to begin
     while(!!(loci_tior & 0x80)){    //Scanning in progress
-        i = loci_tior & 0x7F;      //Using tior value as test pattern and map index
+        i = (loci_tior & 0x7F);      //Using tior value as test pattern and map index
+        if(i>31){
+            DBG_STATUS("TADR");
+            return i;
+        }
         mia_push_char(i);
         mia_push_char('A');
         ch = mia_pop_char();        //Assignment needed to force read
@@ -742,6 +751,6 @@ void main(void){
         key = Mouse(key);
         if(key)
             DisplayKey(key);
-        TUI_PUTC(39,1,txt_spinner[(VIA.t1_hi >> 6)]);
+        TUI_PUTC(39,1,txt_spinner[(irq_ticks & 0x03)]);
     }
 }
