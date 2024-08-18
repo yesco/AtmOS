@@ -5,10 +5,15 @@
 ; Enables the C IRQ tools
 
 .export initirq, doneirq, _irq_int, _nmi_int
+.exportzp _irq_ticks
 ;.import callirq 
 .import _exit, ReadKeyboard
 
 .include "loci.inc"
+
+.segment "ZEROPAGE"
+_irq_ticks:
+    .res 1
 
 .segment "ONCE"
 
@@ -48,7 +53,10 @@ handler:
     tya
     pha
     ;jsr callirq
+    inc _irq_ticks
     lda VIA_T1CL        ;clear timer interrupt
+    lda #$7F
+    sta VIA_IFR         ;cancel any VIA interrupt
     jsr ReadKeyboard
     pla
     tay
