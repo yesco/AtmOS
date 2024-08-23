@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include "libsrc/dir.h"
 #include "libsrc/dirent.h"
-#include "strisquint.h"
 #include "persist.h"
 
 extern uint8_t irq_ticks;
@@ -212,7 +211,7 @@ uint8_t dir_fill(char* dname){
             dir_buf[tail++] = '[';
         }else{
             if(filter[0]){
-                if(!strisquint(fil->d_name, filter)){
+                if(!strcasestr(fil->d_name, filter)){
                     dir_entries--;  //roll-back
                     continue;       //next file
                 }
