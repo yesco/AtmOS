@@ -1,3 +1,5 @@
+#include <stdbool.h>
+
 typedef struct _loci_cfg {
     uint8_t fdc_on;
     uint8_t tap_on;
@@ -14,3 +16,4 @@ void persist_set_magic(void);
 
 void persist_set_loci_cfg(loci_cfg_t* cfg);
 bool persist_get_loci_cfg(loci_cfg_t* cfg);
+
