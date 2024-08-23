@@ -8,6 +8,7 @@
 #include "libsrc/dir.h"
 #include "libsrc/dirent.h"
 #include "strisquint.h"
+#include "persist.h"
 
 extern uint8_t irq_ticks;
 #pragma zpsym ("irq_ticks")
@@ -22,7 +23,6 @@ const char txt_df3[] = "  D:";
 const char txt_tape[] = "Cassette";
 const char txt_tap[] = "tap:";
 const char txt_mouse[] = "Mouse";
-const char txt_empty[] = " ";
 const char txt_x[] = "[x]";
 const char txt_on[] = "\x14on  \x10";
 const char txt_off[] = "\x11off \x10";
@@ -65,10 +65,7 @@ char dir_rpage[2];
 uint8_t dir_needs_refresh;
 #define DIR_PAGE_SIZE 24
 
-#define PATH_SIZE 128
-char path[PATH_SIZE];
-
-char drv_names[5][32];
+struct _loci_cfg loci_cfg;
 
 uint8_t auto_tune_tior(void);
 
@@ -78,12 +75,12 @@ tui_widget ui[] = {
     //{ TUI_BOX,  39,28, 0, 0 },
     { TUI_TXT,   1, 0, 40, txt_title },
     { TUI_TXT,   1, 2,10, txt_mdisc }, { TUI_SEL, 12, 2, 6, txt_off },
-    { TUI_TXT,   3, 3, 4, txt_df0 }, { TUI_SEL,   8, 3,26, txt_empty },
-    { TUI_TXT,   3, 4, 4, txt_df1 }, { TUI_SEL,   8, 4,26, txt_empty },
-    { TUI_TXT,   3, 5, 4, txt_df2 }, { TUI_SEL,   8, 5,26, txt_empty },
-    { TUI_TXT,   3, 6, 4, txt_df3 }, { TUI_SEL,   8, 6,26, txt_empty },
+    { TUI_TXT,   3, 3, 4, txt_df0 }, { TUI_SEL,   8, 3,26, loci_cfg.drv_names[0] },
+    { TUI_TXT,   3, 4, 4, txt_df1 }, { TUI_SEL,   8, 4,26, loci_cfg.drv_names[1] },
+    { TUI_TXT,   3, 5, 4, txt_df2 }, { TUI_SEL,   8, 5,26, loci_cfg.drv_names[2] },
+    { TUI_TXT,   3, 6, 4, txt_df3 }, { TUI_SEL,   8, 6,26, loci_cfg.drv_names[3] },
     { TUI_TXT,   1, 8,10, txt_tape },{ TUI_SEL, 12, 8, 6, txt_off },
-    { TUI_TXT,   3, 9, 4, txt_tap }, { TUI_SEL,   8, 9,18, txt_empty },
+    { TUI_TXT,   3, 9, 4, txt_tap }, { TUI_SEL,   8, 9,18, loci_cfg.drv_names[4] },
     { TUI_TXT,   1,11,10, txt_mouse }, { TUI_SEL, 12,11, 6, txt_off },
     { TUI_TXT,   1,13,10, txt_map },
     { TUI_TXT,  29, 13, 1, txt_alt},
@@ -135,7 +132,7 @@ tui_widget ui[] = {
 tui_widget popup[POPUP_FILE_START+DIR_PAGE_SIZE+1] = {
     { TUI_START, 2, 2, 0, 0 },
     { TUI_BOX,  35,26, 0, 0 },
-    { TUI_TXT,   1, 0,22, path},
+    { TUI_TXT,   1, 0,22, loci_cfg.path},
     { TUI_TXT,  23, 0, 8, txt_filter},
     { TUI_INP,  24, 0, 6, filter},
     { TUI_SEL,  31, 0, 3, txt_x},
@@ -285,15 +282,28 @@ void parse_files_to_widget(void){
     
 }
 
+
 extern void init_display(void);
 
 int8_t calling_widget = -1;
-struct _loci_cfg {
-    uint8_t fdc_on;
-    uint8_t tap_on;
-    uint8_t mou_on;
-    uint8_t b11_on;
-} loci_cfg = { 0x00, 0x00, 0x00, 0x01 };
+
+void boot(void){
+    persist_set_loci_cfg(&loci_cfg);
+    persist_set_magic();
+    mia_set_ax(0x80 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
+    //mia_set_ax(0x00 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
+    VIA.ier = 0x7F;         //Disable VIA interrupts
+    mia_call_int_errno(MIA_OP_BOOT);
+}
+
+void update_btn(uint8_t idx, uint8_t on){
+    if(on){
+        tui_set_data(idx,txt_on);
+    }else{
+        tui_set_data(idx,txt_off);
+    }
+    tui_draw_widget(idx);
+}
 
 void DisplayKey(unsigned char key)
 {
@@ -406,7 +416,7 @@ void DisplayKey(unsigned char key)
                             strcpy(filter,".dsk");
                         else
                             strcpy(filter,".tap");
-                        dir_ok = dir_fill(path);
+                        dir_ok = dir_fill(loci_cfg.path);
                         parse_files_to_widget();
                         tui_draw(popup);
                         if(dir_entries)
@@ -418,9 +428,7 @@ void DisplayKey(unsigned char key)
                         break;
                     case(IDX_BOOT):
                         DBG_STATUS("boot");
-                        mia_set_ax(0x80 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
-                        VIA.ier = 0x7F;         //Disable VIA interrupts
-                        mia_call_int_errno(MIA_OP_BOOT);
+                        boot();
                         break;
                     case(IDX_MAP_REW):
                         if(rv1 > 0) 
@@ -479,20 +487,20 @@ void DisplayKey(unsigned char key)
                         tmp_ptr = (char*)tui_get_data(tui_get_current());
                         if(tmp_ptr[0]=='/' || tmp_ptr[0]=='['){    //Directory or device selection
                             if(tmp_ptr[0]=='['){
-                                path[0] = tmp_ptr[1];
-                                path[1] = tmp_ptr[2];
-                                path[2] = 0x00;
+                                loci_cfg.path[0] = tmp_ptr[1];
+                                loci_cfg.path[1] = tmp_ptr[2];
+                                loci_cfg.path[2] = 0x00;
                             }else if(tmp_ptr[1]=='.'){              //Go back down (/..)
-                                if((ret = strrchr(path,'/')) != NULL){
+                                if((ret = strrchr(loci_cfg.path,'/')) != NULL){
                                     ret[0] = 0x00;
                                 }else{
-                                    path[0] = 0x00;
+                                    loci_cfg.path[0] = 0x00;
                                 }
                             }else{
-                                strncat(path,tmp_ptr,128-strlen(path));
+                                strncat(loci_cfg.path,tmp_ptr,256-strlen(loci_cfg.path));
                             }
                             dir_needs_refresh = 1;
-                            dir_ok = dir_fill(path);
+                            dir_ok = dir_fill(loci_cfg.path);
                             parse_files_to_widget();
                             tui_draw(popup);
                             if(dir_entries)
@@ -521,12 +529,16 @@ void DisplayKey(unsigned char key)
                                 drive = 4;
                                 break;
                         }
-                        mount(drive,path,tmp_ptr);
+                        if(mount(drive,loci_cfg.path,tmp_ptr)==0x00){
+                            loci_cfg.mounts |= 1u << drive;
+                        }else{
+                            loci_cfg.mounts &= ~1u << drive;
+                        }
                         tui_clear_box(1);
                         tui_draw(ui);
                         tui_clear_txt(calling_widget);
-                        strncpy(drv_names[drive],tmp_ptr,32);
-                        tui_set_data(calling_widget,drv_names[drive]);
+                        strncpy(loci_cfg.drv_names[drive],tmp_ptr,32);
+                        tui_set_data(calling_widget,loci_cfg.drv_names[drive]);
                         tui_draw_widget(calling_widget);
                         tui_set_current(calling_widget);
                         calling_widget = -1;
@@ -544,7 +556,7 @@ void DisplayKey(unsigned char key)
             break;
         case(KEY_RETURN):
             if(tui_get_type(tui_get_current()) == TUI_INP){
-                dir_ok = dir_fill(path);
+                dir_ok = dir_fill(loci_cfg.path);
                 parse_files_to_widget();
                 tui_draw(popup);
                 if(!dir_ok){
@@ -571,10 +583,7 @@ void DisplayKey(unsigned char key)
             }
             if(calling_widget == -1){   //Return to Oric
                 DBG_STATUS("BOOT");
-                mia_set_ax(0x80 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
-                //mia_set_ax(0x00 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
-                VIA.ier = 0x7F;         //Disable VIA interrupts
-                mia_call_int_errno(MIA_OP_BOOT);
+                boot();
             }else{                      //Escape from popup
                 tui_clear_box(1);
                 tui_draw(ui);
@@ -733,6 +742,22 @@ void main(void){
         locifw_version[2], locifw_version[1], locifw_version[0]);
     #endif
     tui_cls(3);
+ 
+    if(!persist_get_loci_cfg(&loci_cfg)){
+        loci_cfg.fdc_on = 0x00;
+        loci_cfg.tap_on = 0x00;
+        loci_cfg.mou_on = 0x00;
+        loci_cfg.b11_on = 0x01;
+        loci_cfg.ser_on = 0x01;
+        loci_cfg.mounts = 0x00;
+        loci_cfg.path[0] = 0x00;
+        loci_cfg.drv_names[0][0] = 0x00;
+        loci_cfg.drv_names[1][0] = 0x00;
+        loci_cfg.drv_names[2][0] = 0x00;
+        loci_cfg.drv_names[3][0] = 0x00;
+        loci_cfg.drv_names[4][0] = 0x00;
+    }
+   
     rv1 = loci_tmap;
     sprintf(txt_rv1,"%02d",rv1);
     sprintf(&txt_tior[5],"%02d",loci_tior);
@@ -740,7 +765,9 @@ void main(void){
     sprintf(&txt_tiod[5],"%02d",loci_tiod);
     sprintf(&txt_tadr[5],"%02d",loci_tadr);
     tui_draw(ui);
-    strncpy(path,"",128);
+    update_btn(IDX_FDC_ON,loci_cfg.fdc_on);
+    update_btn(IDX_TAP_ON,loci_cfg.tap_on);
+    update_btn(IDX_MOU_ON,loci_cfg.mou_on);
     dir_needs_refresh = 1;
     //dir_fill(path);
     //parse_files_to_widget();
