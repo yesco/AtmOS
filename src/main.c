@@ -33,7 +33,7 @@ const char txt_usb[] = "\x09\x04#%&()";
 const char txt_rew[] = "*";
 const char txt_ffw[] = "+";
 const char txt_cnt[] = "034";
-const char txt_eject[] = "\011,";
+const char txt_eject[] = ",";
 const char txt_locked[] = "!";
 const char txt_unlocked[] = "\"";
 const char txt_warn_sign[] = "\x01!\x03";
@@ -95,17 +95,21 @@ tui_widget ui[] = {
     { TUI_TXT,  29,  9, 1, txt_alt},
     { TUI_SEL,  30,  9, 1, txt_rew},
     { TUI_TXT,  32,  9, 3, txt_cnt},
-    { TUI_SEL,  36,  9, 1, txt_ffw},
-    { TUI_SEL,  35,  3, 2, txt_eject},
-    { TUI_SEL,  35,  4, 2, txt_eject},
-    { TUI_SEL,  35,  5, 2, txt_eject},
-    { TUI_SEL,  35,  6, 2, txt_eject},
-    { TUI_SEL,  38,  3, 1, txt_unlocked},
-    { TUI_SEL,  38,  4, 1, txt_locked},
-    { TUI_SEL,  38,  5, 1, txt_locked},
-    { TUI_SEL,  38,  6, 1, txt_unlocked},
+    { TUI_SEL,  36,  9, 1, txt_eject},
+    { TUI_TXT,  35,  3, 1, txt_alt},
+    { TUI_TXT,  35,  4, 1, txt_alt},
+    { TUI_TXT,  35,  5, 1, txt_alt},
+    { TUI_TXT,  35,  6, 1, txt_alt},
+    { TUI_SEL,  36,  3, 1, txt_eject},
+    { TUI_SEL,  36,  4, 1, txt_eject},
+    { TUI_SEL,  36,  5, 1, txt_eject},
+    { TUI_SEL,  36,  6, 1, txt_eject},
+    { TUI_NOP,  38,  3, 1, txt_unlocked},
+    { TUI_NOP,  38,  4, 1, txt_locked},
+    { TUI_NOP,  38,  5, 1, txt_locked},
+    { TUI_NOP,  38,  6, 1, txt_unlocked},
     { TUI_TXT,  37,  9, 1, txt_alt},
-    { TUI_SEL,  38,  9, 1, txt_locked},
+    { TUI_NOP,  38,  9, 1, txt_locked},
     { TUI_SEL,  31, 27, 8, txt_boot},
 
     { TUI_TXT,   1, 15, 8, txt_timing},
@@ -127,8 +131,21 @@ tui_widget ui[] = {
 #define IDX_MAP_REW 20
 #define IDX_MAP_RV1 21
 #define IDX_MAP_FFW 22
-#define IDX_BOOT 38
-#define IDX_TIOR 40
+#define IDX_EJECT_TAP 27
+#define IDX_EJECT_DF0 32
+#define IDX_EJECT_DF1 33
+#define IDX_EJECT_DF2 34
+#define IDX_EJECT_DF3 35
+#define IDX_BOOT 42
+#define IDX_TIOR 44
+
+const uint8_t tui_eject_idx[] = { 
+    IDX_EJECT_DF0, 
+    IDX_EJECT_DF1,
+    IDX_EJECT_DF2,
+    IDX_EJECT_DF3,
+    IDX_EJECT_TAP,
+};
 
 #define POPUP_FILE_START 8
 tui_widget popup[POPUP_FILE_START+DIR_PAGE_SIZE+1] = {
@@ -299,13 +316,35 @@ void boot(void){
     mia_call_int_errno(MIA_OP_BOOT);
 }
 
-void update_btn(uint8_t idx, uint8_t on){
+void update_onoff_btn(uint8_t idx, uint8_t on){
     if(on){
         tui_set_data(idx,txt_on);
     }else{
         tui_set_data(idx,txt_off);
     }
     tui_draw_widget(idx);
+}
+
+void update_eject_btn(uint8_t drv){
+    tui_widget* widget;
+    uint8_t idx;
+    idx = tui_eject_idx[drv];
+    widget = &ui[idx];
+    if(loci_cfg.mounts & (1u << drv)){
+        widget->type = TUI_SEL;
+        tui_draw_widget(idx);
+    }else{
+        tui_clear_txt(idx);
+        widget->type = TUI_NOP;
+    }
+}
+
+void do_eject(uint8_t drv, uint8_t ui_idx){
+    umount(drv);
+    loci_cfg.drv_names[drv][0] = '\0';
+    tui_clear_txt(ui_idx);
+    tui_draw_widget(ui_idx);
+    loci_cfg.mounts &= ~(1u << drv);
 }
 
 void DisplayKey(unsigned char key)
@@ -335,7 +374,30 @@ void DisplayKey(unsigned char key)
                     tui_toggle_highlight(idx);
                 }
             }else{
-                screen[0 + --y] = ' ';
+                if(calling_widget == -1){
+                    switch(tui_get_current()){
+                        case(IDX_DF0):
+                            do_eject(0,IDX_DF0);
+                            tui_toggle_highlight(IDX_DF0);
+                            break;
+                        case(IDX_DF1):
+                            do_eject(1,IDX_DF1);
+                            tui_toggle_highlight(IDX_DF1);
+                            break;
+                        case(IDX_DF2):
+                            do_eject(2,IDX_DF2);
+                            tui_toggle_highlight(IDX_DF2);
+                            break;
+                        case(IDX_DF3):
+                            do_eject(3,IDX_DF3);
+                            tui_toggle_highlight(IDX_DF3);
+                            break;
+                        case(IDX_TAP):
+                            do_eject(4,IDX_TAP);
+                            tui_toggle_highlight(IDX_TAP);
+                            break;
+                    }
+                }
             }
             break;
         case(KEY_UP):
@@ -483,6 +545,31 @@ void DisplayKey(unsigned char key)
                         //DBG_STATUS("    ");
                         tui_draw_widget(IDX_MAP_RV1);
                         break;
+                    case(IDX_EJECT_DF0):
+                        do_eject(0,IDX_DF0);
+                        update_eject_btn(0);
+                        tui_set_current(IDX_DF0);
+                        break;
+                    case(IDX_EJECT_DF1):
+                        do_eject(1,IDX_DF1);
+                        update_eject_btn(1);
+                        tui_set_current(IDX_DF1);
+                        break;
+                    case(IDX_EJECT_DF2):
+                        do_eject(2,IDX_DF2);
+                        update_eject_btn(2);
+                        tui_set_current(IDX_DF2);
+                        break;
+                    case(IDX_EJECT_DF3):
+                        do_eject(3,IDX_DF3);
+                        update_eject_btn(3);
+                        tui_set_current(IDX_DF3);
+                        break;
+                    case(IDX_EJECT_TAP):
+                        do_eject(4,IDX_TAP);
+                        update_eject_btn(4);
+                        tui_set_current(IDX_TAP);
+                        break;
                 }
             }else{
                 switch(tui_get_current()){
@@ -571,6 +658,7 @@ void DisplayKey(unsigned char key)
                         }
                         tui_clear_box(1);
                         tui_draw(ui);
+                        update_eject_btn(drive);
                         tui_clear_txt(calling_widget);
                         strncpy(loci_cfg.drv_names[drive],tmp_ptr,32);
                         tui_set_data(calling_widget,loci_cfg.drv_names[drive]);
@@ -801,9 +889,14 @@ void main(void){
     sprintf(&txt_tiod[5],"%02d",loci_tiod);
     sprintf(&txt_tadr[5],"%02d",loci_tadr);
     tui_draw(ui);
-    update_btn(IDX_FDC_ON,loci_cfg.fdc_on);
-    update_btn(IDX_TAP_ON,loci_cfg.tap_on);
-    update_btn(IDX_MOU_ON,loci_cfg.mou_on);
+    update_onoff_btn(IDX_FDC_ON,loci_cfg.fdc_on);
+    update_onoff_btn(IDX_TAP_ON,loci_cfg.tap_on);
+    update_onoff_btn(IDX_MOU_ON,loci_cfg.mou_on);
+    update_eject_btn(0);
+    update_eject_btn(1);
+    update_eject_btn(2);
+    update_eject_btn(3);
+    update_eject_btn(4);
     tui_set_current(loci_cfg.tui_pos);
     dir_needs_refresh = 1;
     //dir_fill(path);
