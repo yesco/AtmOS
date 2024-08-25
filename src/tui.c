@@ -21,6 +21,8 @@ void tui_draw(tui_widget* list){
             case TUI_INP:
                 tui_draw_widget(i);
                 break;
+            case TUI_NOP:
+                break;
             case TUI_END:
                 return;
             default:
@@ -43,9 +45,12 @@ void tui_draw_widget(uint8_t widget_idx){
         case TUI_BTN:
             tui_draw_txt(list[widget_idx].x, list[widget_idx].y, (char *)list[widget_idx].data, list[widget_idx].len);
             tui_toggle_highlight(widget_idx);
+            break;
         case TUI_INP:
             tui_clear_txt(widget_idx);
             tui_draw_txt(list[widget_idx].x, list[widget_idx].y, (char *)list[widget_idx].data, list[widget_idx].len);
+            break;
+        default:
             break;
     }
 }

@@ -27,6 +27,7 @@ enum tui_type {
     TUI_BOX,
     TUI_TXT,
     TUI_INV,
+    TUI_NOP,
     //Active widgets
     TUI_SEL = TUI_ACTIVE,       //TXT but selectable
     TUI_BTN,                    //SEL but reversed paper/ink
