@@ -342,24 +342,56 @@ void DisplayKey(unsigned char key)
             tui_prev_active();
             break;
         case(KEY_LEFT):
-            if(calling_widget != -1 && dir_ok){
-                dir_offset -= DIR_PAGE_SIZE;
-                parse_files_to_widget();
-                tui_draw(popup);
-                if(dir_entries)
-                    tui_set_current(POPUP_FILE_START);
+            if(calling_widget != -1){
+                if(dir_ok){
+                    dir_offset -= DIR_PAGE_SIZE;
+                    parse_files_to_widget();
+                    tui_draw(popup);
+                    if(dir_entries)
+                        tui_set_current(POPUP_FILE_START);
+                }
+            }else{
+                switch(tui_get_current()){
+                    case(IDX_MAP_REW):
+                    case(IDX_MAP_RV1):
+                    case(IDX_MAP_FFW):
+                        if(rv1 > 0) 
+                            rv1--;
+                        DBG_STATUS("map-");
+                        rv1 = tune_tmap(rv1);
+                        sprintf(txt_rv1, "%02d", rv1);
+                        //DBG_STATUS("    ");
+                        tui_draw_widget(IDX_MAP_RV1);
+                    break;
+                }
             }
             break;
         case(KEY_DOWN):
             tui_next_active();
             break;
         case(KEY_RIGHT):
-            if(calling_widget != -1 && dir_ok){
-                dir_offset += DIR_PAGE_SIZE;
-                parse_files_to_widget();
-                tui_draw(popup);
-                if(dir_entries)
-                    tui_set_current(POPUP_FILE_START);
+            if(calling_widget != -1){
+                if(dir_ok){
+                    dir_offset += DIR_PAGE_SIZE;
+                    parse_files_to_widget();
+                    tui_draw(popup);
+                    if(dir_entries)
+                        tui_set_current(POPUP_FILE_START);
+                }
+            }else{
+                switch(tui_get_current()){
+                    case(IDX_MAP_REW):
+                    case(IDX_MAP_RV1):
+                    case(IDX_MAP_FFW):
+                        if(rv1 < 31) 
+                            rv1++;
+                        DBG_STATUS("map+");
+                        rv1 = tune_tmap(rv1);
+                        sprintf(txt_rv1, "%02d", rv1);
+                        //DBG_STATUS("    ");
+                        tui_draw_widget(IDX_MAP_RV1);
+                    break;
+                }
             }
             break;
         case(KEY_SPACE):
@@ -785,7 +817,7 @@ void main(void){
             DisplayKey(key);
         TUI_PUTC(39,1,txt_spinner[(irq_ticks & 0x03)]);
         sprintf(
-            TUI_SCREEN_XY(1,26),
+            TUI_SCREEN_XY(1,27),
             "%02x%02x%02x%02x%02x%02x%02x%02x",
             KeyMatrix[0], KeyMatrix[1], KeyMatrix[2], KeyMatrix[3],
             KeyMatrix[4], KeyMatrix[5], KeyMatrix[6], KeyMatrix[7]
