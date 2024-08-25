@@ -290,6 +290,7 @@ extern void init_display(void);
 int8_t calling_widget = -1;
 
 void boot(void){
+    loci_cfg.tui_pos = tui_get_current();
     persist_set_loci_cfg(&loci_cfg);
     persist_set_magic();
     mia_set_ax(0x80 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
@@ -758,6 +759,7 @@ void main(void){
         loci_cfg.drv_names[2][0] = 0x00;
         loci_cfg.drv_names[3][0] = 0x00;
         loci_cfg.drv_names[4][0] = 0x00;
+        loci_cfg.tui_pos = IDX_DF0;
     }
    
     rv1 = loci_tmap;
@@ -770,6 +772,7 @@ void main(void){
     update_btn(IDX_FDC_ON,loci_cfg.fdc_on);
     update_btn(IDX_TAP_ON,loci_cfg.tap_on);
     update_btn(IDX_MOU_ON,loci_cfg.mou_on);
+    tui_set_current(loci_cfg.tui_pos);
     dir_needs_refresh = 1;
     //dir_fill(path);
     //parse_files_to_widget();
