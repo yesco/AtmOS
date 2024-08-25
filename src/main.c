@@ -133,13 +133,13 @@ tui_widget ui[] = {
 #define POPUP_FILE_START 8
 tui_widget popup[POPUP_FILE_START+DIR_PAGE_SIZE+1] = {
     { TUI_START, 2, 2, 0, 0 },
-    { TUI_BOX,  35,26, 0, 0 },
-    { TUI_TXT,   1, 0,22, loci_cfg.path},
-    { TUI_TXT,  23, 0, 8, txt_filter},
-    { TUI_INP,  24, 0, 6, filter},
-    { TUI_SEL,  31, 0, 3, txt_x},
-    { TUI_TXT,  30,25, 1, dir_lpage},
-    { TUI_TXT,  31,25, 1, dir_rpage},
+    { TUI_BOX,  38,26, 0, 0 },
+    { TUI_TXT,   1, 0,25, loci_cfg.path},
+    { TUI_TXT,  26, 0, 8, txt_filter},
+    { TUI_INP,  27, 0, 6, filter},
+    { TUI_SEL,  34, 0, 3, txt_x},
+    { TUI_TXT,  33,25, 1, dir_lpage},
+    { TUI_TXT,  34,25, 1, dir_rpage},
     { TUI_END,   0, 0, 0, 0 }
 };
 #define IDX_FILTER 4
@@ -259,7 +259,7 @@ void parse_files_to_widget(void){
         popupf[i].type = TUI_SEL;
         popupf[i].x = 1;
         popupf[i].y = i+1;
-        popupf[i].len = 31;
+        popupf[i].len = 34;
         popupf[i].data = dir_idx[i]; //dir_ptr_list[-(dir_entries-offset-i)];
     }
 
@@ -784,5 +784,11 @@ void main(void){
         if(key)
             DisplayKey(key);
         TUI_PUTC(39,1,txt_spinner[(irq_ticks & 0x03)]);
+        sprintf(
+            TUI_SCREEN_XY(1,26),
+            "%02x%02x%02x%02x%02x%02x%02x%02x",
+            KeyMatrix[0], KeyMatrix[1], KeyMatrix[2], KeyMatrix[3],
+            KeyMatrix[4], KeyMatrix[5], KeyMatrix[6], KeyMatrix[7]
+        );
     }
 }
