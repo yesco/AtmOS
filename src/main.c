@@ -32,7 +32,6 @@ const char txt_alt[] = "\011";
 const char txt_usb[] = "\x09\x04#%&()";
 const char txt_rew[] = "*";
 const char txt_ffw[] = "+";
-const char txt_cnt[] = "034";
 const char txt_eject[] = ",";
 const char txt_locked[] = "!";
 const char txt_unlocked[] = "\"";
@@ -48,6 +47,7 @@ char txt_tior[] = "tior --";
 char txt_tiow[] = "tiow --";
 char txt_tiod[] = "tiod --";
 char txt_tadr[] = "tadr --";
+char txt_cnt[8];
 
 char filter[6] = ".dsk";
 
@@ -92,9 +92,9 @@ tui_widget ui[] = {
 
     { TUI_TXT,  32, 0, 7, txt_usb},
 
-    { TUI_TXT,  29,  9, 1, txt_alt},
-    { TUI_SEL,  30,  9, 1, txt_rew},
-    { TUI_TXT,  32,  9, 3, txt_cnt},
+    { TUI_TXT,  26,  9, 1, txt_alt},
+    { TUI_SEL,  27,  9, 1, txt_rew},
+    { TUI_TXT,  28,  9, 7, txt_cnt},
     { TUI_SEL,  36,  9, 1, txt_eject},
     { TUI_TXT,  35,  3, 1, txt_alt},
     { TUI_TXT,  35,  4, 1, txt_alt},
@@ -132,6 +132,7 @@ tui_widget ui[] = {
 #define IDX_MAP_RV1 21
 #define IDX_MAP_FFW 22
 #define IDX_TAP_REW 25
+#define IDX_TAP_CNT 26
 #define IDX_EJECT_TAP 27
 #define IDX_EJECT_DF0 32
 #define IDX_EJECT_DF1 33
@@ -573,6 +574,8 @@ void DisplayKey(unsigned char key)
                         break;
                     case(IDX_TAP_REW):
                         TAP.cmd = TAP_CMD_REW;
+                        sprintf(txt_cnt,"%7lu",tap_counter(0));
+                        tui_draw_widget(IDX_TAP_CNT);
                         break;
                 }
             }else{
@@ -892,6 +895,7 @@ void main(void){
     sprintf(&txt_tiow[5],"%02d",loci_tiow);
     sprintf(&txt_tiod[5],"%02d",loci_tiod);
     sprintf(&txt_tadr[5],"%02d",loci_tadr);
+    sprintf(txt_cnt, "%7lu", tap_counter(0));
     tui_draw(ui);
     update_onoff_btn(IDX_FDC_ON,loci_cfg.fdc_on);
     update_onoff_btn(IDX_TAP_ON,loci_cfg.tap_on);
