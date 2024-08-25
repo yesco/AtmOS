@@ -134,6 +134,7 @@ long __fastcall__ mia_call_long_errno (unsigned char op);
 
 #define MIA_OP_MOUNT 0x90
 #define MIA_OP_UMOUNT 0x91
+#define MIA_OP_TAP_CNT 0x92
 
 #define MIA_OP_BOOT 0xA0
 #define MIA_OP_TUNE_TMAP 0xA1
@@ -157,6 +158,7 @@ int __fastcall__ write_xram (unsigned buf, unsigned count, int fildes);
 
 int __fastcall__ mount (int drive, register const char* path,register const char* filename);
 int __fastcall__ umount (int drive);
+unsigned long __fastcall__ tap_counter (unsigned long seek);
 
 int __fastcall__ tune_tmap (unsigned char delay);
 int __fastcall__ tune_tior (unsigned char delay);
