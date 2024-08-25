@@ -66,6 +66,18 @@ struct __LOCI_MIA
 #define MIA_READY_RX_BIT 0x40
 #define MIA_BUSY_BIT 0x80
 
+struct __LOCI_TAP
+{
+    unsigned char cmd;
+    unsigned char status;
+    unsigned char data;
+};
+#define TAP (*(volatile struct __LOCI_TAP *)0x0315)
+
+#define TAP_CMD_PLAY 0x01
+#define TAP_CMD_REC  0x02
+#define TAP_CMD_REW  0x03
+
 /* XSTACK helpers */
 
 void __fastcall__ mia_push_long (unsigned long val);

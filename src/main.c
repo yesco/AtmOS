@@ -131,6 +131,7 @@ tui_widget ui[] = {
 #define IDX_MAP_REW 20
 #define IDX_MAP_RV1 21
 #define IDX_MAP_FFW 22
+#define IDX_TAP_REW 25
 #define IDX_EJECT_TAP 27
 #define IDX_EJECT_DF0 32
 #define IDX_EJECT_DF1 33
@@ -569,6 +570,9 @@ void DisplayKey(unsigned char key)
                         do_eject(4,IDX_TAP);
                         update_eject_btn(4);
                         tui_set_current(IDX_TAP);
+                        break;
+                    case(IDX_TAP_REW):
+                        TAP.cmd = TAP_CMD_REW;
                         break;
                 }
             }else{
