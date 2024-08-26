@@ -404,6 +404,8 @@ void DisplayKey(unsigned char key)
                         case(IDX_TAP):
                             do_eject(4,IDX_TAP);
                             update_eject_btn(4);
+                            sprintf(txt_cnt,"%7lu",tap_counter(0));
+                            tui_draw_widget(IDX_TAP_CNT);
                             tui_toggle_highlight(IDX_TAP);
                             break;
                     }
@@ -584,6 +586,8 @@ void DisplayKey(unsigned char key)
                     case(IDX_EJECT_TAP):
                         do_eject(4,IDX_TAP);
                         update_eject_btn(4);
+                        sprintf(txt_cnt,"%7lu",tap_counter(0));
+                        tui_draw_widget(IDX_TAP_CNT);
                         tui_set_current(IDX_TAP);
                         break;
                     case(IDX_TAP_REW):
@@ -694,6 +698,8 @@ void DisplayKey(unsigned char key)
                             loci_cfg.tap_on = 0x01;
                             tui_set_data(IDX_TAP_ON,txt_on);
                             tui_draw_widget(IDX_TAP_ON);
+                            sprintf(txt_cnt,"%7lu",tap_counter(0));
+                            tui_draw_widget(IDX_TAP_CNT);
                         }
                 }
             }
