@@ -28,9 +28,11 @@ const char txt_mouse[] = "Mouse";
 const char txt_x[] = "[x]";
 const char txt_on[] = "\x14on  \x10";
 const char txt_off[] = "\x11off \x10";
+const char txt_std[] = "\010";
 const char txt_alt[] = "\011";
 const char txt_usb[] = "\x09\x04#%&()";
 const char txt_rew[] = "*";
+const char txt_neg[] = "-";
 const char txt_ffw[] = "+";
 const char txt_eject[] = ",";
 const char txt_locked[] = "!";
@@ -85,9 +87,10 @@ tui_widget ui[] = {
     { TUI_TXT,   3, 9, 4, txt_tap }, { TUI_SEL,   8, 9,18, loci_cfg.drv_names[4] },
     { TUI_TXT,   1,11,10, txt_mouse }, { TUI_SEL, 12,11, 6, txt_off },
     { TUI_TXT,   1,13,10, txt_map },
+    { TUI_SEL,  30, 13, 1, txt_neg},
     { TUI_TXT,  29, 13, 1, txt_alt},
-    { TUI_SEL,  30, 13, 1, txt_rew},
-    { TUI_TXT,  33, 13, 3, txt_rv1},
+    { TUI_TXT,  33, 13, 2, txt_rv1},
+    { TUI_TXT,  29, 13, 1, txt_std},
     { TUI_SEL,  36, 13, 1, txt_ffw},
 
     { TUI_TXT,  32, 0, 7, txt_usb},
@@ -128,18 +131,18 @@ tui_widget ui[] = {
 #define IDX_TAP_ON 13
 #define IDX_TAP 15
 #define IDX_MOU_ON 17
-#define IDX_MAP_REW 20
+#define IDX_MAP_REW 19
 #define IDX_MAP_RV1 21
-#define IDX_MAP_FFW 22
-#define IDX_TAP_REW 25
-#define IDX_TAP_CNT 26
-#define IDX_EJECT_TAP 27
-#define IDX_EJECT_DF0 32
-#define IDX_EJECT_DF1 33
-#define IDX_EJECT_DF2 34
-#define IDX_EJECT_DF3 35
-#define IDX_BOOT 42
-#define IDX_TIOR 44
+#define IDX_MAP_FFW 23
+#define IDX_TAP_REW 26
+#define IDX_TAP_CNT 27
+#define IDX_EJECT_TAP 28
+#define IDX_EJECT_DF0 33
+#define IDX_EJECT_DF1 34
+#define IDX_EJECT_DF2 35
+#define IDX_EJECT_DF3 36
+#define IDX_BOOT 43
+#define IDX_TIOR 45
 
 const uint8_t tui_eject_idx[] = { 
     IDX_EJECT_DF0, 
@@ -414,20 +417,6 @@ void DisplayKey(unsigned char key)
                     if(dir_entries)
                         tui_set_current(POPUP_FILE_START);
                 }
-            }else{
-                switch(tui_get_current()){
-                    case(IDX_MAP_REW):
-                    case(IDX_MAP_RV1):
-                    case(IDX_MAP_FFW):
-                        if(rv1 > 0) 
-                            rv1--;
-                        DBG_STATUS("map-");
-                        rv1 = tune_tmap(rv1);
-                        sprintf(txt_rv1, "%02d", rv1);
-                        //DBG_STATUS("    ");
-                        tui_draw_widget(IDX_MAP_RV1);
-                    break;
-                }
             }
             break;
         case(KEY_DOWN):
@@ -442,7 +431,10 @@ void DisplayKey(unsigned char key)
                     if(dir_entries)
                         tui_set_current(POPUP_FILE_START);
                 }
-            }else{
+            }
+            break;
+        case('+'):
+            if(calling_widget == -1){
                 switch(tui_get_current()){
                     case(IDX_MAP_REW):
                     case(IDX_MAP_RV1):
@@ -450,6 +442,23 @@ void DisplayKey(unsigned char key)
                         if(rv1 < 31) 
                             rv1++;
                         DBG_STATUS("map+");
+                        rv1 = tune_tmap(rv1);
+                        sprintf(txt_rv1, "%02d", rv1);
+                        //DBG_STATUS("    ");
+                        tui_draw_widget(IDX_MAP_RV1);
+                    break;
+                }
+            }
+            break;
+        case('_'):  //unshifted '-'
+            if(calling_widget == -1){
+                switch(tui_get_current()){
+                    case(IDX_MAP_REW):
+                    case(IDX_MAP_RV1):
+                    case(IDX_MAP_FFW):
+                        if(rv1 > 0) 
+                            rv1--;
+                        DBG_STATUS("map-");
                         rv1 = tune_tmap(rv1);
                         sprintf(txt_rv1, "%02d", rv1);
                         //DBG_STATUS("    ");
