@@ -383,22 +383,27 @@ void DisplayKey(unsigned char key)
                     switch(tui_get_current()){
                         case(IDX_DF0):
                             do_eject(0,IDX_DF0);
+                            update_eject_btn(0);
                             tui_toggle_highlight(IDX_DF0);
                             break;
                         case(IDX_DF1):
                             do_eject(1,IDX_DF1);
+                            update_eject_btn(1);
                             tui_toggle_highlight(IDX_DF1);
                             break;
                         case(IDX_DF2):
                             do_eject(2,IDX_DF2);
+                            update_eject_btn(2);
                             tui_toggle_highlight(IDX_DF2);
                             break;
                         case(IDX_DF3):
                             do_eject(3,IDX_DF3);
+                            update_eject_btn(3);
                             tui_toggle_highlight(IDX_DF3);
                             break;
                         case(IDX_TAP):
                             do_eject(4,IDX_TAP);
+                            update_eject_btn(4);
                             tui_toggle_highlight(IDX_TAP);
                             break;
                     }
