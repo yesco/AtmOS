@@ -18,10 +18,10 @@ extern uint8_t irq_ticks;
 char txt_title[40];
 const char txt_menu[] = "Select";
 const char txt_mdisc[] = "Microdisc";
-const char txt_df0[] = "  A:";
-const char txt_df1[] = "  B:";
-const char txt_df2[] = "  C:";
-const char txt_df3[] = "  D:";
+const char txt_df0[] = "A:";
+const char txt_df1[] = "B:";
+const char txt_df2[] = "C:";
+const char txt_df3[] = "D:";
 const char txt_tape[] = "Cassette";
 const char txt_tap[] = "tap:";
 const char txt_mouse[] = "Mouse";
@@ -71,33 +71,45 @@ uint8_t dir_needs_refresh;
 
 struct _loci_cfg loci_cfg;
 
-uint8_t auto_tune_tior(void);
+extern void init_display(void);
 
+uint8_t auto_tune_tior(void);
+int dir_cmp(const void *lhsp,const void *rhsp);
+uint8_t dir_fill(char* dname);
+uint8_t tap_fill(void);
+void parse_files_to_widget(void);
+void boot(void);
+void update_onoff_btn(uint8_t idx, uint8_t on);
+void update_eject_btn(uint8_t drv);
+void do_eject(uint8_t drv, uint8_t ui_idx);
+void DisplayKey(unsigned char key);
+unsigned char Mouse(unsigned char key);
+void main(void);
 
 tui_widget ui[] = {
     { TUI_START, 1, 0, 0, 0 },
     //{ TUI_BOX,  39,28, 0, 0 },
     { TUI_TXT,   1, 0, 40, txt_title },
     { TUI_TXT,   1, 2,10, txt_mdisc }, { TUI_SEL, 12, 2, 6, txt_off },
-    { TUI_TXT,   3, 3, 4, txt_df0 }, { TUI_SEL,   8, 3,26, loci_cfg.drv_names[0] },
-    { TUI_TXT,   3, 4, 4, txt_df1 }, { TUI_SEL,   8, 4,26, loci_cfg.drv_names[1] },
-    { TUI_TXT,   3, 5, 4, txt_df2 }, { TUI_SEL,   8, 5,26, loci_cfg.drv_names[2] },
-    { TUI_TXT,   3, 6, 4, txt_df3 }, { TUI_SEL,   8, 6,26, loci_cfg.drv_names[3] },
+    { TUI_TXT,   5, 3, 4, txt_df0 }, { TUI_SEL,   8, 3,26, loci_cfg.drv_names[0] },
+    { TUI_TXT,   5, 4, 4, txt_df1 }, { TUI_SEL,   8, 4,26, loci_cfg.drv_names[1] },
+    { TUI_TXT,   5, 5, 4, txt_df2 }, { TUI_SEL,   8, 5,26, loci_cfg.drv_names[2] },
+    { TUI_TXT,   5, 6, 4, txt_df3 }, { TUI_SEL,   8, 6,26, loci_cfg.drv_names[3] },
     { TUI_TXT,   1, 8,10, txt_tape },{ TUI_SEL, 12, 8, 6, txt_off },
     { TUI_TXT,   3, 9, 4, txt_tap }, { TUI_SEL,   8, 9,18, loci_cfg.drv_names[4] },
-    { TUI_TXT,   1,11,10, txt_mouse }, { TUI_SEL, 12,11, 6, txt_off },
-    { TUI_TXT,   1,13,10, txt_map },
-    { TUI_SEL,  30, 13, 1, txt_neg},
-    { TUI_TXT,  29, 13, 1, txt_alt},
-    { TUI_TXT,  33, 13, 2, txt_rv1},
-    { TUI_TXT,  29, 13, 1, txt_std},
-    { TUI_SEL,  36, 13, 1, txt_ffw},
+    { TUI_TXT,   1,12,10, txt_mouse }, { TUI_SEL, 12,12, 6, txt_off },
+    { TUI_TXT,   1,14,10, txt_map },
+    { TUI_SEL,  30, 14, 1, txt_neg},
+    { TUI_TXT,  29, 14, 1, txt_alt},
+    { TUI_TXT,  33, 14, 2, txt_rv1},
+    { TUI_TXT,  29, 14, 1, txt_std},
+    { TUI_SEL,  36, 14, 1, txt_ffw},
 
     { TUI_TXT,  32, 0, 7, txt_usb},
 
     { TUI_TXT,  26,  9, 1, txt_alt},
     { TUI_SEL,  27,  9, 1, txt_rew},
-    { TUI_TXT,  28,  9, 7, txt_cnt},
+    { TUI_SEL,  28,  9, 7, txt_cnt},
     { TUI_SEL,  36,  9, 1, txt_eject},
     { TUI_TXT,  35,  3, 1, txt_alt},
     { TUI_TXT,  35,  4, 1, txt_alt},
@@ -164,6 +176,7 @@ tui_widget popup[POPUP_FILE_START+DIR_PAGE_SIZE+1] = {
     { TUI_TXT,  34,25, 1, dir_rpage},
     { TUI_END,   0, 0, 0, 0 }
 };
+#define IDX_PATH 2
 #define IDX_FILTER 4
 #define IDX_XPAGE 5
 #define IDX_LPAGE 6
@@ -208,7 +221,7 @@ uint8_t dir_fill(char* dname){
     if(!dir_needs_refresh){
     //    return 1;
     }
-    DBG_STATUS("odir");
+    //DBG_STATUS("odir");
     dir = opendir(dname);
     if(dname[0]==0x00){     //Root/device list
         tail = 0;
@@ -221,7 +234,7 @@ uint8_t dir_fill(char* dname){
     }
     dir_offset = 0;
     ret = 1;
-    DBG_STATUS("rdir");
+    //DBG_STATUS("rdir");
     while(tail < DIR_BUF_SIZE){             //Safeguard
         do {
             fil = readdir(dir);
@@ -253,13 +266,52 @@ uint8_t dir_fill(char* dname){
             tail += len + 1;
         }
     }
-    DBG_STATUS("cdir");
+    //DBG_STATUS("cdir");
     closedir(dir);
-    DBG_STATUS("    ");
+    //DBG_STATUS("    ");
 
     qsort(&dir_ptr_list[-(dir_entries)], dir_entries, sizeof(char*), dir_cmp);
     dir_needs_refresh = 0;
     return ret;
+}
+
+/* Reuse dir_buf for tape content listing */
+uint8_t tap_fill(void){
+    tap_header_t hdr;
+    long counter;
+    unsigned int start_addr, end_addr, size;
+    dir_entries = 0;
+    dir_offset = 0;
+    
+    TAP.cmd = TAP_CMD_REW;
+                        
+    //Using fixed 64 byte entries for tape content
+    while((dir_entries < (DIR_BUF_SIZE/64))){
+        counter = tap_read_header(&hdr);
+        if(counter == -1)
+            break;
+        start_addr = (unsigned int)((hdr.start_addr_hi<<8) | hdr.start_addr_lo);
+        end_addr =   (unsigned int)((hdr.end_addr_hi<<8)   | hdr.end_addr_lo);
+        if(start_addr > end_addr)   //Bad/unsupported header
+            size = 0;
+        else
+            size = end_addr - start_addr;
+        *((long*)(&dir_buf[dir_entries*64])) = counter;
+        sprintf(&dir_buf[(dir_entries*64) + 4]," %d %-12.12s %-3s $%04X %5db",
+            dir_entries + 1,
+            hdr.filename[0] ? (char*)hdr.filename : "<no name>",
+            hdr.type == 0x80 ? "BIN" : "BAS",    //TODO Incomplete Type decode
+            start_addr, 
+            size
+        );
+        dir_ptr_list[-(dir_entries+1)] = &dir_buf[(dir_entries*64)+4];
+        dir_entries++;
+        //Seek over file on tape
+        counter += sizeof(tap_header_t) + 4 + size;
+        tap_seek(counter);
+    }
+    qsort(&dir_ptr_list[-(dir_entries)], dir_entries, sizeof(char*), dir_cmp);
+    return dir_entries;
 }
 
 void parse_files_to_widget(void){
@@ -306,9 +358,6 @@ void parse_files_to_widget(void){
     
 }
 
-
-extern void init_display(void);
-
 int8_t calling_widget = -1;
 
 void boot(void){
@@ -350,6 +399,7 @@ void do_eject(uint8_t drv, uint8_t ui_idx){
     tui_clear_txt(ui_idx);
     tui_draw_widget(ui_idx);
     loci_cfg.mounts &= ~(1u << drv);
+    update_eject_btn(drv);
 }
 
 void DisplayKey(unsigned char key)
@@ -383,28 +433,23 @@ void DisplayKey(unsigned char key)
                     switch(tui_get_current()){
                         case(IDX_DF0):
                             do_eject(0,IDX_DF0);
-                            update_eject_btn(0);
                             tui_toggle_highlight(IDX_DF0);
                             break;
                         case(IDX_DF1):
                             do_eject(1,IDX_DF1);
-                            update_eject_btn(1);
                             tui_toggle_highlight(IDX_DF1);
                             break;
                         case(IDX_DF2):
                             do_eject(2,IDX_DF2);
-                            update_eject_btn(2);
                             tui_toggle_highlight(IDX_DF2);
                             break;
                         case(IDX_DF3):
                             do_eject(3,IDX_DF3);
-                            update_eject_btn(3);
                             tui_toggle_highlight(IDX_DF3);
                             break;
                         case(IDX_TAP):
                             do_eject(4,IDX_TAP);
-                            update_eject_btn(4);
-                            sprintf(txt_cnt,"%7lu",tap_counter(0));
+                            sprintf(txt_cnt,"%7lu",tap_tell());
                             tui_draw_widget(IDX_TAP_CNT);
                             tui_toggle_highlight(IDX_TAP);
                             break;
@@ -448,7 +493,7 @@ void DisplayKey(unsigned char key)
                     case(IDX_MAP_FFW):
                         if(rv1 < 31) 
                             rv1++;
-                        DBG_STATUS("map+");
+                        //DBG_STATUS("map+");
                         rv1 = tune_tmap(rv1);
                         sprintf(txt_rv1, "%02d", rv1);
                         //DBG_STATUS("    ");
@@ -465,7 +510,7 @@ void DisplayKey(unsigned char key)
                     case(IDX_MAP_FFW):
                         if(rv1 > 0) 
                             rv1--;
-                        DBG_STATUS("map-");
+                        //DBG_STATUS("map-");
                         rv1 = tune_tmap(rv1);
                         sprintf(txt_rv1, "%02d", rv1);
                         //DBG_STATUS("    ");
@@ -533,6 +578,7 @@ void DisplayKey(unsigned char key)
                             strcpy(filter,".tap");
                         dir_ok = dir_fill(loci_cfg.path);
                         parse_files_to_widget();
+                        popup[IDX_PATH].data = (char*)&loci_cfg.path;
                         tui_draw(popup);
                         if(dir_entries)
                             tui_set_current(POPUP_FILE_START);
@@ -541,6 +587,17 @@ void DisplayKey(unsigned char key)
                             tui_draw(warning);
                         }
                         break;
+                    case(IDX_TAP_CNT):
+                        calling_widget = tui_get_current();
+                        filter[0] = '\0';
+                        dir_ok = tap_fill();
+                        parse_files_to_widget();
+                        popup[IDX_PATH].data = (char*)&loci_cfg.drv_names[4];
+                        tui_draw(popup);
+                        if(dir_entries)
+                            tui_set_current(POPUP_FILE_START);
+                        dir_needs_refresh = true;
+                        break;
                     case(IDX_BOOT):
                         DBG_STATUS("boot");
                         boot();
@@ -548,7 +605,7 @@ void DisplayKey(unsigned char key)
                     case(IDX_MAP_REW):
                         if(rv1 > 0) 
                             rv1--;
-                        DBG_STATUS("map-");
+                        //DBG_STATUS("map-");
                         rv1 = tune_tmap(rv1);
                         sprintf(txt_rv1, "%02d", rv1);
                         //DBG_STATUS("    ");
@@ -557,7 +614,7 @@ void DisplayKey(unsigned char key)
                     case(IDX_MAP_FFW):
                         if(rv1 < 31) 
                             rv1++;
-                        DBG_STATUS("map+");
+                        //DBG_STATUS("map+");
                         rv1 = tune_tmap(rv1);
                         sprintf(txt_rv1, "%02d", rv1);
                         //DBG_STATUS("    ");
@@ -565,34 +622,29 @@ void DisplayKey(unsigned char key)
                         break;
                     case(IDX_EJECT_DF0):
                         do_eject(0,IDX_DF0);
-                        update_eject_btn(0);
                         tui_set_current(IDX_DF0);
                         break;
                     case(IDX_EJECT_DF1):
                         do_eject(1,IDX_DF1);
-                        update_eject_btn(1);
                         tui_set_current(IDX_DF1);
                         break;
                     case(IDX_EJECT_DF2):
                         do_eject(2,IDX_DF2);
-                        update_eject_btn(2);
                         tui_set_current(IDX_DF2);
                         break;
                     case(IDX_EJECT_DF3):
                         do_eject(3,IDX_DF3);
-                        update_eject_btn(3);
                         tui_set_current(IDX_DF3);
                         break;
                     case(IDX_EJECT_TAP):
                         do_eject(4,IDX_TAP);
-                        update_eject_btn(4);
-                        sprintf(txt_cnt,"%7lu",tap_counter(0));
+                        sprintf(txt_cnt,"%7lu",tap_tell());
                         tui_draw_widget(IDX_TAP_CNT);
                         tui_set_current(IDX_TAP);
                         break;
                     case(IDX_TAP_REW):
                         TAP.cmd = TAP_CMD_REW;
-                        sprintf(txt_cnt,"%7lu",tap_counter(0));
+                        sprintf(txt_cnt,"%7lu",tap_tell());
                         tui_draw_widget(IDX_TAP_CNT);
                         break;
                 }
@@ -675,20 +727,29 @@ void DisplayKey(unsigned char key)
                             case(IDX_TAP):
                                 drive = 4;
                                 break;
+                            case(IDX_TAP_CNT):
+                                drive = 5;      //Pseudo drive
+                                break;
                         }
-                        if(mount(drive,loci_cfg.path,tmp_ptr)==0x00){
-                            loci_cfg.mounts |= 1u << drive;
-                        }else{
-                            loci_cfg.mounts &= ~1u << drive;
-                        }
+                        if(drive<5)
+                            if(mount(drive,loci_cfg.path,tmp_ptr)==0x00){
+                                loci_cfg.mounts |= 1u << drive;
+                            }else{
+                                loci_cfg.mounts &= ~1u << drive;
+                            }
+                        else
+                            tap_seek(*((long*)(tmp_ptr-4-1)));  //Seek to start of header
+
                         tui_clear_box(1);
                         tui_draw(ui);
-                        update_eject_btn(drive);
-                        tui_clear_txt(calling_widget);
-                        strncpy(loci_cfg.drv_names[drive],tmp_ptr,32);
-                        tui_set_data(calling_widget,loci_cfg.drv_names[drive]);
-                        tui_draw_widget(calling_widget);
-                        tui_set_current(calling_widget);
+                        if(drive<5){
+                            update_eject_btn(drive);
+                            tui_clear_txt(calling_widget);
+                            strncpy(loci_cfg.drv_names[drive],tmp_ptr,32);
+                            tui_set_data(calling_widget,loci_cfg.drv_names[drive]);
+                            tui_draw_widget(calling_widget);
+                            tui_set_current(calling_widget);
+                        }
                         calling_widget = -1;
                         if(drive < 4){
                             loci_cfg.fdc_on = 0x01;
@@ -698,7 +759,7 @@ void DisplayKey(unsigned char key)
                             loci_cfg.tap_on = 0x01;
                             tui_set_data(IDX_TAP_ON,txt_on);
                             tui_draw_widget(IDX_TAP_ON);
-                            sprintf(txt_cnt,"%7lu",tap_counter(0));
+                            sprintf(txt_cnt,"%7lu",tap_tell());
                             tui_draw_widget(IDX_TAP_CNT);
                         }
                 }
@@ -771,6 +832,9 @@ void DisplayKey(unsigned char key)
                             break;
                         case('t'):
                             tui_set_current(IDX_TAP);
+                            break;
+                        case('k'):
+                            tui_set_current(IDX_TAP_CNT);
                             break;
                         case('m'):
                             tui_set_current(IDX_MOU_ON);
@@ -875,13 +939,14 @@ uint8_t auto_tune_tior(void){
         if(mia_pop_char() != i)
             TUI_PUTC(2+i,25,17);
     }
-    i = (uint8_t)(strstr(TUI_SCREEN_XY(2, 25), "\x12\x12\x12\x12") - TUI_SCREEN_XY(2, 25) + 4);
+    i = (uint8_t)(strcasestr(TUI_SCREEN_XY(2, 25), "\x12\x12\x12\x12") - TUI_SCREEN_XY(2, 25) + 4);
     TUI_PUTC(2+i, 24, 'v');
     tune_tior(i);
     return i;
 }
 
 void main(void){
+    uint8_t i;
     init_display();
     #ifdef VERSION
     sprintf(txt_title,"LOCI ROM %d.%d.%d FW %d.%d.%d",
@@ -906,6 +971,7 @@ void main(void){
         loci_cfg.drv_names[2][0] = 0x00;
         loci_cfg.drv_names[3][0] = 0x00;
         loci_cfg.drv_names[4][0] = 0x00;
+        loci_cfg.drv_names[5][0] = 0x00;
         loci_cfg.tui_pos = IDX_DF0;
     }
    
@@ -915,16 +981,13 @@ void main(void){
     sprintf(&txt_tiow[5],"%02d",loci_tiow);
     sprintf(&txt_tiod[5],"%02d",loci_tiod);
     sprintf(&txt_tadr[5],"%02d",loci_tadr);
-    sprintf(txt_cnt, "%7lu", tap_counter(0));
+    sprintf(txt_cnt, "%7lu", tap_tell());
     tui_draw(ui);
     update_onoff_btn(IDX_FDC_ON,loci_cfg.fdc_on);
     update_onoff_btn(IDX_TAP_ON,loci_cfg.tap_on);
     update_onoff_btn(IDX_MOU_ON,loci_cfg.mou_on);
-    update_eject_btn(0);
-    update_eject_btn(1);
-    update_eject_btn(2);
-    update_eject_btn(3);
-    update_eject_btn(4);
+    for(i=4; i>0; i--)
+        update_eject_btn(i);
     tui_set_current(loci_cfg.tui_pos);
     dir_needs_refresh = 1;
     //dir_fill(path);
@@ -937,11 +1000,13 @@ void main(void){
         if(key)
             DisplayKey(key);
         TUI_PUTC(39,1,txt_spinner[(irq_ticks & 0x03)]);
+        /*
         sprintf(
             TUI_SCREEN_XY(1,27),
             "%02x%02x%02x%02x%02x%02x%02x%02x",
             KeyMatrix[0], KeyMatrix[1], KeyMatrix[2], KeyMatrix[3],
             KeyMatrix[4], KeyMatrix[5], KeyMatrix[6], KeyMatrix[7]
         );
+        */
     }
 }
