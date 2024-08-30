@@ -78,6 +78,20 @@ struct __LOCI_TAP
 #define TAP_CMD_REC  0x02
 #define TAP_CMD_REW  0x03
 
+typedef struct __TAP_HEADER
+{
+    unsigned char flag_int;
+    unsigned char flag_str;
+    unsigned char type;
+    unsigned char autorun;
+    unsigned char end_addr_hi;
+    unsigned char end_addr_lo;
+    unsigned char start_addr_hi;
+    unsigned char start_addr_lo;
+    unsigned char reserved;
+    unsigned char filename[16];
+} tap_header_t;
+
 /* XSTACK helpers */
 
 void __fastcall__ mia_push_long (unsigned long val);
@@ -134,7 +148,9 @@ long __fastcall__ mia_call_long_errno (unsigned char op);
 
 #define MIA_OP_MOUNT 0x90
 #define MIA_OP_UMOUNT 0x91
-#define MIA_OP_TAP_CNT 0x92
+#define MIA_OP_TAP_SEEK 0x92
+#define MIA_OP_TAP_TELL 0x93
+#define MIA_OP_TAP_HDR 0x94
 
 #define MIA_OP_BOOT 0xA0
 #define MIA_OP_TUNE_TMAP 0xA1
@@ -158,7 +174,9 @@ int __fastcall__ write_xram (unsigned buf, unsigned count, int fildes);
 
 int __fastcall__ mount (int drive, register const char* path,register const char* filename);
 int __fastcall__ umount (int drive);
-unsigned long __fastcall__ tap_counter (unsigned long seek);
+long __fastcall__ tap_seek (long pos);
+long __fastcall__ tap_tell (void);
+long __fastcall__ tap_read_header (tap_header_t* header);
 
 int __fastcall__ tune_tmap (unsigned char delay);
 int __fastcall__ tune_tior (unsigned char delay);
