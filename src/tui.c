@@ -32,23 +32,23 @@ void tui_draw(tui_widget* list){
 }
 
 void tui_draw_widget(uint8_t widget_idx){
-    tui_widget* list = tui_org_list;
-    switch(list[widget_idx].type){
+    tui_widget* widget = &tui_org_list[widget_idx];
+    switch(widget->type){
         case TUI_BOX:
-            tui_draw_box(list[widget_idx].x, list[widget_idx].y);
+            tui_draw_box(widget->x, widget->y);
             break;
         case TUI_TXT:
         case TUI_SEL:
-            tui_draw_txt(list[widget_idx].x, list[widget_idx].y, (char *)list[widget_idx].data, list[widget_idx].len);
+            tui_draw_txt(widget->x, widget->y, (char *)(widget->data), widget->len);
             break;
         case TUI_INV:
         case TUI_BTN:
-            tui_draw_txt(list[widget_idx].x, list[widget_idx].y, (char *)list[widget_idx].data, list[widget_idx].len);
+            tui_draw_txt(widget->x, widget->y, (char *)(widget->data), widget->len);
             tui_toggle_highlight(widget_idx);
             break;
         case TUI_INP:
             tui_clear_txt(widget_idx);
-            tui_draw_txt(list[widget_idx].x, list[widget_idx].y, (char *)list[widget_idx].data, list[widget_idx].len);
+            tui_draw_txt(widget->x, widget->y, (char *)(widget->data), widget->len);
             break;
         default:
             break;
@@ -103,18 +103,19 @@ void tui_clear_box(uint8_t widget_idx){
 }
 
 void tui_draw_box(unsigned char w, unsigned char h){
-    tui_widget* org = tui_org_list;
+    uint8_t org_x = tui_org_list->x;
+    uint8_t org_y = tui_org_list->y;
     uint8_t j;
-    TUI_PUTC(org->x,     org->y,     TUI_BOX_UL);
-    TUI_PUTC(org->x+w-1, org->y,     TUI_BOX_UR);
-    TUI_PUTC(org->x,     org->y+h-1, TUI_BOX_LL);
-    TUI_PUTC(org->x+w-1, org->y+h-1, TUI_BOX_LR);
-    tui_fill(TUI_SCREEN_XY(org->x+1,org->y  ),w-2,TUI_BOX_H);
-    tui_fill(TUI_SCREEN_XY(org->x+1,org->y+h-1),w-2,TUI_BOX_H);
-    for(j = org->y+1; j < (org->y+h-1); j++){
-        TUI_PUTC(org->x    ,j,TUI_BOX_V);
-        TUI_PUTC(org->x+w-1,j,TUI_BOX_V);
-        tui_fill(TUI_SCREEN_XY(org->x+1,j),w-2,' ');
+    TUI_PUTC(org_x,     org_y,     TUI_BOX_UL);
+    TUI_PUTC(org_x+w-1, org_y,     TUI_BOX_UR);
+    TUI_PUTC(org_x,     org_y+h-1, TUI_BOX_LL);
+    TUI_PUTC(org_x+w-1, org_y+h-1, TUI_BOX_LR);
+    tui_fill(TUI_SCREEN_XY(org_x+1,org_y  ),w-2,TUI_BOX_H);
+    tui_fill(TUI_SCREEN_XY(org_x+1,org_y+h-1),w-2,TUI_BOX_H);
+    for(j = org_y+1; j < (org_y+h-1); j++){
+        TUI_PUTC(org_x    ,j,TUI_BOX_V);
+        TUI_PUTC(org_x+w-1,j,TUI_BOX_V);
+        tui_fill(TUI_SCREEN_XY(org_x+1,j),w-2,' ');
     } 
 }
 
