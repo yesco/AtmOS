@@ -3,6 +3,7 @@
 typedef struct _loci_cfg {
     uint8_t fdc_on;
     uint8_t tap_on;
+    uint8_t bit_on;
     uint8_t mou_on;
     uint8_t b11_on;
     uint8_t ser_on;
