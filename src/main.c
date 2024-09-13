@@ -58,7 +58,7 @@ char filter[6] = ".dsk";
 uint8_t rv1;
 uint8_t spin_cnt;
 
-char* dbg_status = TUI_SCREEN_XY(35,1);
+char* dbg_status = TUI_SCREEN_XY_CONST(35,1);
 #define DBG_STATUS(fourc) strncpy(dbg_status,fourc,4)
 
 #define DIR_BUF_SIZE 2048
@@ -946,6 +946,8 @@ uint8_t auto_tune_tior(void){
 void main(void){
     uint8_t i;
     init_display();
+    i = irq_ticks+2;        //Wait 1+ tick for screen mode to stick
+    while(irq_ticks < i){}
     #ifdef VERSION
     sprintf(txt_title,"LOCI ROM %d.%d.%d FW %d.%d.%d",
         locirom_version[2],locirom_version[1],locirom_version[0],
