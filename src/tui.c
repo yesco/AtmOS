@@ -5,6 +5,8 @@
 static tui_widget *tui_org_list;
 static uint8_t tui_current;
 
+void tui_fill(unsigned char len, unsigned char ch, char* buf);
+
 void tui_draw(tui_widget* list){
     unsigned char i;
     for(i=0; list[i].type != TUI_END; i++){
@@ -33,22 +35,25 @@ void tui_draw(tui_widget* list){
 
 void tui_draw_widget(uint8_t widget_idx){
     tui_widget* widget = &tui_org_list[widget_idx];
+    unsigned char local_x = widget->x;
+    unsigned char local_y = widget->y;
+    unsigned char local_len = widget->len;
     switch(widget->type){
         case TUI_BOX:
-            tui_draw_box(widget->x, widget->y);
+            tui_draw_box(local_x, local_y);
             break;
         case TUI_TXT:
         case TUI_SEL:
-            tui_draw_txt(widget->x, widget->y, (char *)(widget->data), widget->len);
+            tui_draw_txt(local_x, local_y, (char *)(widget->data), local_len);
             break;
         case TUI_INV:
         case TUI_BTN:
-            tui_draw_txt(widget->x, widget->y, (char *)(widget->data), widget->len);
+            tui_draw_txt(local_x, local_y, (char *)(widget->data), local_len);
             tui_toggle_highlight(widget_idx);
             break;
         case TUI_INP:
             tui_clear_txt(widget_idx);
-            tui_draw_txt(widget->x, widget->y, (char *)(widget->data), widget->len);
+            tui_draw_txt(local_x, local_y, (char *)(widget->data), local_len);
             break;
         default:
             break;
@@ -71,30 +76,12 @@ uint8_t tui_hit(uint8_t x, uint8_t y){
     return 0;
 }
 
-void tui_fill(char* buf, unsigned char len, unsigned char ch){
-    unsigned char i;
-    for(i=0; i<len; i++){
-        buf[i] = ch;
-    }
-}
-
-void tui_cls(unsigned char ink){
-    uint8_t x,y;
-    char* row = TUI_SCREEN_XY(0,0);
-    for(y=0; y<28; y++){
-        row[0] = ink;
-        for(x=1; x<40; x++){
-            row[x] = ' ';
-        }
-        row = row + 40;
-    }
-}
 
 void tui_draw_clr(uint8_t w, uint8_t h){
     tui_widget* org = tui_org_list;
     uint8_t j;
     for(j = org->y; j < (org->y+h); j++){
-        tui_fill(TUI_SCREEN_XY(org->x,j),w,' ');
+        tui_fill(w,' ',TUI_SCREEN_XY(org->x,j));
     } 
 }
 
@@ -110,12 +97,12 @@ void tui_draw_box(unsigned char w, unsigned char h){
     TUI_PUTC(org_x+w-1, org_y,     TUI_BOX_UR);
     TUI_PUTC(org_x,     org_y+h-1, TUI_BOX_LL);
     TUI_PUTC(org_x+w-1, org_y+h-1, TUI_BOX_LR);
-    tui_fill(TUI_SCREEN_XY(org_x+1,org_y  ),w-2,TUI_BOX_H);
-    tui_fill(TUI_SCREEN_XY(org_x+1,org_y+h-1),w-2,TUI_BOX_H);
+    tui_fill(w-2,TUI_BOX_H,TUI_SCREEN_XY(org_x+1,org_y  ));
+    tui_fill(w-2,TUI_BOX_H,TUI_SCREEN_XY(org_x+1,org_y+h-1));
     for(j = org_y+1; j < (org_y+h-1); j++){
         TUI_PUTC(org_x    ,j,TUI_BOX_V);
         TUI_PUTC(org_x+w-1,j,TUI_BOX_V);
-        tui_fill(TUI_SCREEN_XY(org_x+1,j),w-2,' ');
+        tui_fill(w-2,' ',TUI_SCREEN_XY(org_x+1,j));
     } 
 }
 

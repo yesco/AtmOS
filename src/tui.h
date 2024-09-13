@@ -12,14 +12,18 @@
 #define TUI_SCREEN_W 40
 #define TUI_SCREEN_H 28
 
-#define TUI_SCREEN_XY(x,y) (char*)(0xbb80 + ((y) * TUI_SCREEN_W) + (x)) 
+unsigned int tui_screen_xy(uint8_t x, uint8_t y);
+
+#define TUI_SCREEN_XY_CONST(x,y) (char*)(0xbb80 + ((y) * TUI_SCREEN_W) + (x)) 
+#define TUI_SCREEN_XY(x,y) (char*)tui_screen_xy((x),(y))
 #define TUI_SCREEN (char*)(0xbb80);
 
 //#define TUI_PUTC(x,y,ch) (TUI_SCREEN[(TUI_SCREEN_W * (y)) + (x)] = (ch))
 #define TUI_PUTC(x,y,ch) (*(TUI_SCREEN_XY(x,y)) = (ch))
 
 //First active widget
-#define TUI_ACTIVE 64
+#define TUI_ACTIVE 128
+
 enum tui_type {
     //Passive widgets and tokens
     TUI_END = 0,
