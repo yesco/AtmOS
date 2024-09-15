@@ -5,11 +5,9 @@
 #include "persist.h"
 
 #define XRAM_PERSIST_ADDR 0x2000
-#define XRAM_PERSIST_PATH_SIZE 256
 typedef struct persist_data {
     uint8_t magic[4];
     loci_cfg_t loci_cfg;
-    char paths[6][XRAM_PERSIST_PATH_SIZE];
 } persist_data_t;
 
 #pragma optimize (push,off)
