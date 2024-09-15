@@ -338,18 +338,15 @@ void parse_files_to_widget(void){
     popupf = &popup[POPUP_FILE_START]; //(tui_widget*)(popup + POPUP_FILE_START);
 
     for(i=0; (i < DIR_PAGE_SIZE) && ((i+dir_offset) < dir_entries); i++){
-        popupf[i].type = TUI_SEL;
-        popupf[i].x = 1;
-        popupf[i].y = i+1;
-        popupf[i].len = 34;
-        popupf[i].data = dir_idx[i]; //dir_ptr_list[-(dir_entries-offset-i)];
+        widget = &popupf[i];
+        widget->type = TUI_SEL;
+        widget->x = 1;
+        widget->y = i+1;
+        widget->len = 34;
+        widget->data = dir_idx[i]; //dir_ptr_list[-(dir_entries-offset-i)];
     }
 
-    popupf[i].type = TUI_END;
-    popupf[i].x = 0;
-    popupf[i].y = 0;
-    popupf[i].len = 0;
-    popupf[i].data = 0;
+    widget->type = TUI_END;
 
     dir_lpage[0] = '-';
     dir_rpage[0] = '-';
@@ -369,6 +366,8 @@ void parse_files_to_widget(void){
 int8_t calling_widget = -1;
 
 void boot(void){
+    tui_cls(3);
+    strcpy(TUI_SCREEN_XY_CONST(17,14),"Booting")
     loci_cfg.tui_pos = tui_get_current();
     persist_set_loci_cfg(&loci_cfg);
     persist_set_magic();
@@ -601,7 +600,6 @@ void DisplayKey(unsigned char key)
                         dir_needs_refresh = true;
                         break;
                     case(IDX_BOOT):
-                        DBG_STATUS("boot");
                         boot();
                         break;
                     case(IDX_MAP_REW):
@@ -795,7 +793,6 @@ void DisplayKey(unsigned char key)
                 break;
             }
             if(calling_widget == -1){   //Return to Oric
-                DBG_STATUS("BOOT");
                 boot();
             }else{                      //Escape from popup
                 tui_clear_box(1);
@@ -954,8 +951,8 @@ uint8_t auto_tune_tior(void){
     DBG_STATUS("    ");
     for(i=0; i<32; i++)
         TUI_PUTC(2+i,25,18);
-    TUI_PUTC(2+32,25,16);
-    TUI_PUTC(2+33,25,0);
+    TUI_PUTC_CONST(2+32,25,16);
+    TUI_PUTC_CONST(2+33,25,0);
     tune_scan_enable();
     while(!(loci_tior & 0x80)){}    //Wait for scan to begin
     while(!!(loci_tior & 0x80)){    //Scanning in progress
@@ -1022,7 +1019,7 @@ void main(void){
     update_onoff_btn(IDX_MOU_ON,loci_cfg.mou_on);
     update_mode_btn(IDX_TAP_BIT,loci_cfg.bit_on);
 
-    for(i=4; i>0; i--)
+    for(i=0; i<=4; i++)
         update_eject_btn(i);
     tui_set_current(loci_cfg.tui_pos);
     dir_needs_refresh = 1;
