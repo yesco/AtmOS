@@ -368,7 +368,7 @@ int8_t calling_widget = -1;
 
 void boot(void){
     tui_cls(3);
-    strcpy(TUI_SCREEN_XY_CONST(17,14),"Booting")
+    strcpy(TUI_SCREEN_XY_CONST(17,14),"Booting");
     loci_cfg.tui_pos = tui_get_current();
     persist_set_loci_cfg(&loci_cfg);
     persist_set_magic();
