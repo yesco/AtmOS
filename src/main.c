@@ -1042,6 +1042,6 @@ void main(void){
         do{
             kb |= KeyMatrix[i];
         }while(i--);
-        sprintf(TUI_SCREEN_XY_CONST(38,0),"%02x", kb);
+        sprintf(TUI_SCREEN_XY_CONST(37,0),"%02x", kb);
     }
 }
