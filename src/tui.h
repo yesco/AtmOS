@@ -20,7 +20,7 @@ unsigned int tui_screen_xy(uint8_t x, uint8_t y);
 
 //#define TUI_PUTC(x,y,ch) (TUI_SCREEN[(TUI_SCREEN_W * (y)) + (x)] = (ch))
 #define TUI_PUTC(x,y,ch) (*(TUI_SCREEN_XY(x,y)) = (ch))
-
+#define TUI_PUTC_CONST(x,y,ch) (*(TUI_SCREEN_XY_CONST(x,y)) = (ch))
 //First active widget
 #define TUI_ACTIVE 128
 

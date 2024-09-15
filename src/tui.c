@@ -15,20 +15,11 @@ void tui_draw(tui_widget* list){
                 tui_org_list = list;
                 tui_current = i;
                 break;
-            case TUI_BOX:
-            case TUI_TXT:
-            case TUI_INV:
-            case TUI_SEL:
-            case TUI_BTN:
-            case TUI_INP:
-                tui_draw_widget(i);
-                break;
             case TUI_NOP:
                 break;
-            case TUI_END:
-                return;
             default:
-                return;
+                tui_draw_widget(i);
+                break;
         }
     }
 }
