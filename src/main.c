@@ -1,6 +1,7 @@
 #include <loci.h>
 #include "keyboard.h"
 #include "tui.h"
+#include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -8,6 +9,7 @@
 #include "libsrc/dir.h"
 #include "libsrc/dirent.h"
 #include "persist.h"
+#include "filemanager.h"
 
 extern uint8_t irq_ticks;
 #pragma zpsym ("irq_ticks")
@@ -59,7 +61,9 @@ uint8_t rv1;
 uint8_t spin_cnt;
 
 char* dbg_status = TUI_SCREEN_XY_CONST(35,1);
-#define DBG_STATUS(fourc) strncpy(dbg_status,fourc,4)
+#define DBG_STATUS(fourc) strcpy(dbg_status,fourc)
+
+char tmp_str[256];
 
 #define DIR_BUF_SIZE 2048
 char dir_buf[DIR_BUF_SIZE];
@@ -852,6 +856,35 @@ void DisplayKey(unsigned char key)
                             case('f'):
                                 tui_set_current(IDX_FILTER);
                                 break;
+                            case('i'):
+                                if(idx > POPUP_FILE_START && loci_cfg.path[0]){
+                                    tmp_ptr = (char*)tui_get_data(idx);
+                                    tmp_ptr[0] = '/';
+                                    len = strlen(loci_cfg.path);
+                                    strncat(loci_cfg.path,tmp_ptr,256-len);
+                                    tmp_str[0] = '0';
+                                    tmp_str[1] = ':';
+                                    strcpy(&tmp_str[2],tmp_ptr);
+                                    strcpy(dbg_status,"COPY");
+                                    file_copy(tmp_str,loci_cfg.path);
+                                    strcpy(dbg_status,"    ");
+                                    tmp_ptr[0] = ' ';
+                                    loci_cfg.path[len] = '\0';
+                                }
+                                break;
+                            /*
+                            case(KEY_DELETE):
+                                if(idx > POPUP_FILE_START && loci_cfg.path[0]=='0'){
+                                    tmp_ptr = (char*)tui_get_data(idx);
+                                    tmp_ptr[0] = '/';
+                                    for(len=0;len<strlen(loci_cfg.path);len++)
+                                        mia_push_char(loci_cfg.path[len]);
+                                    for(len=0;len<strlen(tmp_ptr);len++)
+                                        mia_push_char(tmp_ptr[len]);
+                                    mia_call_int_errno(MIA_OP_UNLINK);                                    
+                                }
+                                break;
+                            */
                         }
                     }
                 }
