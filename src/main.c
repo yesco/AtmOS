@@ -112,7 +112,7 @@ tui_widget ui[] = {
     { TUI_TXT,  29, 14, 1, txt_std},
     { TUI_SEL,  36, 14, 1, txt_ffw},
 
-    { TUI_TXT,  32, 0, 7, txt_usb},
+    { TUI_NOP,  32, 0, 7, txt_usb},
 
     { TUI_TXT,  26,  9, 1, txt_alt},
     { TUI_SEL,  27,  9, 1, txt_rew},
@@ -326,6 +326,7 @@ void parse_files_to_widget(void){
     uint8_t i;
     char** dir_idx;
     tui_widget* popupf;
+    tui_widget* widget;
 
     //Directory page out-of-bounds checks
     if(dir_offset >= dir_entries){
@@ -1023,23 +1024,24 @@ void main(void){
         update_eject_btn(i);
     tui_set_current(loci_cfg.tui_pos);
     dir_needs_refresh = 1;
+    //sprintf((char*)(0xBB81+40),"%04X",tui_screen_xy(1,1));
     //dir_fill(path);
     //parse_files_to_widget();
     //tui_draw(popup);
     //tui_draw_box(10,28);
     while(1){
+        char kb;
         unsigned char key = ReadKeyNoBounce();
         key = Mouse(key);
         if(key)
             DisplayKey(key);
-        TUI_PUTC(39,1,txt_spinner[(irq_ticks & 0x03)]);
-        /*
-        sprintf(
-            TUI_SCREEN_XY(1,27),
-            "%02x%02x%02x%02x%02x%02x%02x%02x",
-            KeyMatrix[0], KeyMatrix[1], KeyMatrix[2], KeyMatrix[3],
-            KeyMatrix[4], KeyMatrix[5], KeyMatrix[6], KeyMatrix[7]
-        );
-        */
+        TUI_PUTC_CONST(39,1,txt_spinner[(irq_ticks & 0x03)]);
+        
+        kb = 0;
+        i = 7;
+        do{
+            kb |= KeyMatrix[i];
+        }while(i--);
+        sprintf(TUI_SCREEN_XY_CONST(38,0),"%02x", kb);
     }
 }
