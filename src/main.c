@@ -325,7 +325,6 @@ uint8_t tap_fill(void){
 void parse_files_to_widget(void){
     uint8_t i;
     char** dir_idx;
-    tui_widget* popupf;
     tui_widget* widget;
 
     //Directory page out-of-bounds checks
@@ -336,17 +335,16 @@ void parse_files_to_widget(void){
         dir_offset = 0;
     }
     dir_idx = &dir_ptr_list[-(dir_entries-dir_offset)]; //(char**)(dir_ptr_list - dir_entries + offset);
-    popupf = &popup[POPUP_FILE_START]; //(tui_widget*)(popup + POPUP_FILE_START);
+    widget = &popup[POPUP_FILE_START]; //(tui_widget*)(popup + POPUP_FILE_START);
 
     for(i=0; (i < DIR_PAGE_SIZE) && ((i+dir_offset) < dir_entries); i++){
-        widget = &popupf[i];
         widget->type = TUI_SEL;
         widget->x = 1;
         widget->y = i+1;
         widget->len = 34;
         widget->data = dir_idx[i]; //dir_ptr_list[-(dir_entries-offset-i)];
+        widget = &widget[1];
     }
-
     widget->type = TUI_END;
 
     dir_lpage[0] = '-';
