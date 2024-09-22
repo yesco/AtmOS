@@ -2,7 +2,9 @@
 #include <string.h>
 
 
-static tui_widget *tui_org_list;
+extern tui_widget *tui_org_list;
+#pragma zpsym ("tui_org_list");
+
 static uint8_t tui_current;
 
 void tui_fill(unsigned char len, unsigned char ch, char* buf);
@@ -25,48 +27,27 @@ void tui_draw(tui_widget* list){
 }
 
 void tui_draw_widget(uint8_t widget_idx){
-    tui_widget* widget = &tui_org_list[widget_idx];
-    unsigned char local_x = widget->x;
-    unsigned char local_y = widget->y;
-    unsigned char local_len = widget->len;
-    switch(widget->type){
+    switch(tui_org_list[widget_idx].type){
         case TUI_BOX:
-            tui_draw_box(local_x, local_y);
+            tui_draw_box(widget_idx);
             break;
         case TUI_TXT:
         case TUI_SEL:
-            tui_draw_txt(local_x, local_y, (char *)(widget->data), local_len);
+            tui_draw_txt(widget_idx);
             break;
         case TUI_INV:
         case TUI_BTN:
-            tui_draw_txt(local_x, local_y, (char *)(widget->data), local_len);
+            tui_draw_txt(widget_idx);
             tui_toggle_highlight(widget_idx);
             break;
         case TUI_INP:
             tui_clear_txt(widget_idx);
-            tui_draw_txt(local_x, local_y, (char *)(widget->data), local_len);
+            tui_draw_txt(widget_idx);
             break;
         default:
             break;
     }
 }
-
-uint8_t tui_hit(uint8_t x, uint8_t y){
-    uint8_t i;
-    int8_t local_x = x - tui_org_list[0].x;
-    int8_t local_y = y - tui_org_list[0].y;
-    for(i=1; tui_org_list[i].type != TUI_END; i++){
-        if( tui_org_list[i].type >= TUI_ACTIVE &&
-            local_y == tui_org_list[i].y && 
-            local_x >= tui_org_list[i].x && 
-            local_x < (tui_org_list[i].len + tui_org_list[i].x)
-        ){
-            return i;
-        }
-    }
-    return 0;
-}
-
 
 void tui_draw_clr(uint8_t w, uint8_t h){
     tui_widget* org = tui_org_list;
@@ -80,7 +61,10 @@ void tui_clear_box(uint8_t widget_idx){
     tui_draw_clr(tui_org_list[widget_idx].x,tui_org_list[widget_idx].y);
 }
 
-void tui_draw_box(unsigned char w, unsigned char h){
+void tui_draw_box(unsigned char widget_idx){
+    tui_widget* widget = &tui_org_list[widget_idx];
+    unsigned char w = widget->x;
+    unsigned char h= widget->y;
     uint8_t org_x = tui_org_list->x;
     uint8_t org_y = tui_org_list->y;
     uint8_t j;
@@ -97,7 +81,12 @@ void tui_draw_box(unsigned char w, unsigned char h){
     } 
 }
 
-void tui_draw_txt(unsigned char x, unsigned char y, char* str, unsigned char len){
+void tui_draw_txt(unsigned char widget_idx){
+    tui_widget* widget = &tui_org_list[widget_idx];
+    unsigned char x = widget->x;
+    unsigned char y = widget->y;
+    unsigned char len = widget->len;
+    char *str = widget->data;
     uint8_t i;
     for(i=0; i<len && str[i]; i++){
         TUI_PUTC(tui_org_list->x + x + i, tui_org_list->y + y, str[i]);

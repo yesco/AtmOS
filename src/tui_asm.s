@@ -2,14 +2,20 @@
 ; tui_asm.s
 ; ---------------------------------------------------------------------------
 
-.export _tui_screen_xy, _tui_cls, _tui_fill
+.export _tui_org_list, _tui_screen_xy, _tui_cls, _tui_fill, _tui_hit
 .import popa, popax
 
 .define TUI_SCREEN $BB80
 
 .zeropage
+_tui_org_list: .res 2
 tui_ptr:    .res 2
 tui_tmp:    .res 1
+
+.bss
+tui_x:      .res 1
+tui_y:      .res 1
+tui_x2:     .res 1
 
 .data
 
@@ -88,5 +94,59 @@ tui_row_offset:
     dey
     sta (tui_ptr),y
     bne @loop
+    rts
+.endproc
+
+.proc _tui_hit
+    sec
+    ldy #2
+    sbc (_tui_org_list),y     ;y-org_y
+    sta tui_y
+    jsr popa
+    dey
+    sec
+    sbc (_tui_org_list),y     ;x-org_x
+    sta tui_x
+    lda #0
+    sta tui_tmp
+    lda _tui_org_list
+    sta tui_ptr
+    lda _tui_org_list+1
+    sta tui_ptr+1
+@loop:
+    inc tui_tmp
+    clc
+    lda #6
+    adc tui_ptr
+    sta tui_ptr
+    lda #0
+    tay
+    adc tui_ptr+1
+    sta tui_ptr+1
+    lda (tui_ptr),y
+    beq @miss               ;TUI_END
+    bpl @loop               ;Not Active
+    ldy #2
+    lda (tui_ptr),y         ;Get widget Y
+    cmp tui_y
+    bne @loop               ;Not same Y
+    dey
+    lda (tui_ptr),y         ;Get widget X
+    cmp tui_x
+    beq @pass
+    bpl @loop               ;Left of widget
+@pass:
+    ldy #3
+    clc
+    adc (tui_ptr),y         ;Add widget len
+    cmp tui_x
+    beq @loop
+    bmi @loop               ;Right of widget
+    bpl @hit                ;Left of widget end = HIT
+@miss:
+    lda #0
+    rts
+@hit:
+    lda tui_tmp
     rts
 .endproc
