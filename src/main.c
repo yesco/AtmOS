@@ -469,7 +469,26 @@ void DisplayKey(unsigned char key)
                             tui_toggle_highlight(IDX_TAP);
                             break;
                     }
-                }
+                }else{
+                    if(dir_ok && idx > POPUP_FILE_START && loci_cfg.path[0]=='0'){
+                        tmp_ptr = (char*)tui_get_data(idx);
+                        tmp_ptr[0]='/';
+                        len = strlen(tmp_ptr);
+                        do{
+                            mia_push_char(tmp_ptr[--len]);
+                        }while(len);
+                        tmp_ptr[0]=' ';
+                        len = strlen(loci_cfg.path);
+                        do{
+                            mia_push_char(loci_cfg.path[--len]);
+                        }while(len);
+                        if(mia_call_int_errno(MIA_OP_UNLINK)<0)
+                            sprintf(TUI_SCREEN_XY_CONST(37,1),"%02x",errno);
+                        dir_ok = dir_fill(loci_cfg.path);
+                        parse_files_to_widget();
+                        tui_draw(popup);
+                    }
+                }                          
             }
             break;
         case(KEY_UP):
@@ -857,7 +876,7 @@ void DisplayKey(unsigned char key)
                                 tui_set_current(IDX_FILTER);
                                 break;
                             case('i'):
-                                if(idx > POPUP_FILE_START && loci_cfg.path[0]){
+                                if(idx > POPUP_FILE_START && loci_cfg.path[0]!='0'){
                                     tmp_ptr = (char*)tui_get_data(idx);
                                     tmp_ptr[0] = '/';
                                     len = strlen(loci_cfg.path);
@@ -872,19 +891,6 @@ void DisplayKey(unsigned char key)
                                     loci_cfg.path[len] = '\0';
                                 }
                                 break;
-                            /*
-                            case(KEY_DELETE):
-                                if(idx > POPUP_FILE_START && loci_cfg.path[0]=='0'){
-                                    tmp_ptr = (char*)tui_get_data(idx);
-                                    tmp_ptr[0] = '/';
-                                    for(len=0;len<strlen(loci_cfg.path);len++)
-                                        mia_push_char(loci_cfg.path[len]);
-                                    for(len=0;len<strlen(tmp_ptr);len++)
-                                        mia_push_char(tmp_ptr[len]);
-                                    mia_call_int_errno(MIA_OP_UNLINK);                                    
-                                }
-                                break;
-                            */
                         }
                     }
                 }
