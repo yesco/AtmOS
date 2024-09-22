@@ -554,6 +554,10 @@ void DisplayKey(unsigned char key)
                         loci_cfg.mou_on ^= 0x01;
                         update_onoff_btn(IDX_MOU_ON,loci_cfg.mou_on);
                         tui_toggle_highlight(IDX_MOU_ON);
+                        if(loci_cfg.mou_on)
+                            xreg_mia_mouse(0x7000);
+                        else
+                            xreg_mia_mouse(0xFFFF);
                         break;
                     case(IDX_TAP_ON):
                         loci_cfg.tap_on ^= 0x01;
@@ -906,7 +910,7 @@ unsigned char Mouse(unsigned char key){
         return key;
     
     screen = TUI_SCREEN;
-    MIA.addr0 = 0x8000;
+    MIA.addr0 = 0x7000;
     MIA.step0 = 1;
     btn = MIA.rw0;
     x = MIA.rw0;
