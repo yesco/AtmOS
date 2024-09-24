@@ -101,27 +101,6 @@ void tui_clear_txt(uint8_t widget_idx){
     }while(len);
 }
 
-void tui_toggle_highlight(uint8_t widget_idx){
-    char *scr_widget;
-    tui_widget *widget = &tui_org_list[widget_idx];
-    unsigned char i;
-    if(widget->type < TUI_ACTIVE) return; //Ignore passive widgets
-    scr_widget = TUI_SCREEN_XY(tui_org_list->x + widget->x, tui_org_list->y + widget->y);
-    if(widget->type == TUI_INP){
-        scr_widget += strlen(widget->data);
-        if(scr_widget[0] == ' '){
-            scr_widget[0] ^= 0x80;
-        }
-        else{
-            scr_widget[0] = ' ';
-        } 
-    }else{
-        for(i=0;i<widget->len;i++){
-            scr_widget[i] ^= 0x80;  //Toggle invert bit
-        }
-    }
-}
-
 void tui_set_current(uint8_t widget_idx){
     tui_toggle_highlight(tui_current);      //Un-highlight previous
     tui_current = widget_idx;

@@ -2,7 +2,7 @@
 ; tui_asm.s
 ; ---------------------------------------------------------------------------
 
-.export _tui_org_list, _tui_screen_xy, _tui_cls, _tui_fill, _tui_hit
+.export _tui_org_list, _tui_screen_xy, _tui_cls, _tui_fill, _tui_hit, _tui_toggle_highlight
 .import popa, popax
 
 .define TUI_SCREEN $BB80
@@ -10,12 +10,14 @@
 .zeropage
 _tui_org_list: .res 2
 tui_ptr:    .res 2
+tui_ptr2:   .res 2
 tui_tmp:    .res 1
 
 .bss
 tui_x:      .res 1
 tui_y:      .res 1
-tui_x2:     .res 1
+tui_len:    .res 1
+tui_widget: .res 6
 
 .data
 
@@ -29,6 +31,9 @@ tui_row_offset:
 .proc _tui_screen_xy
     tax
     jsr popa
+.endproc
+
+.proc tui_screen_xy
     ;OR instead of adc as x is <= 40 and <TUI_SCREEN is 0x80
     ora #<TUI_SCREEN
     sta tui_ptr+0
@@ -46,11 +51,11 @@ tui_row_offset:
     rol tui_tmp
     ;c is zero
     adc tui_ptr+0
-    tay ;sta tui_ptr+0
+    pha ;sta tui_ptr+0
     lda tui_tmp
     adc tui_ptr+1
     tax
-    tya ;lda tui_ptr+0
+    pla ;lda tui_ptr+0
     rts
 .endproc
 
@@ -150,3 +155,81 @@ tui_row_offset:
     lda tui_tmp
     rts
 .endproc
+
+.proc _tui_toggle_highlight
+    ldy #0
+    sty tui_ptr+0
+    sty tui_ptr+1
+    sta tui_tmp            ;widget idx in A
+    clc                    ;calc *6 
+    rol A                   ; idx<<1 = *2
+    ;sta tui_ptr+0
+    rol tui_ptr+1           ; c->hibyte
+    adc tui_tmp             ; *2+idx = *3
+    sta tui_ptr+0           ; store lobyte
+    lda #0
+    adc tui_ptr+1           ; c->hibyte
+    sta tui_ptr+1
+    rol tui_ptr+0           ; *3<<1 = *6
+    rol tui_ptr+1
+    clc
+    lda _tui_org_list+0     ; add orig_list to idx*6 
+    adc tui_ptr+0
+    sta tui_ptr+0
+    lda _tui_org_list+1
+    adc tui_ptr+1
+    sta tui_ptr+1
+    ldy #5
+@loop:
+    lda (tui_ptr),y         ; get widget copy
+    sta tui_widget,y
+    dey
+    bpl @loop
+    clc
+    ldy #2
+    lda (_tui_org_list),y   ; orig Y
+    adc tui_widget+2        ; add widget Y
+    tax
+    clc
+    dey
+    lda (_tui_org_list),y   ; orig X
+    adc tui_widget+1        ; add widget X
+    jsr tui_screen_xy       ; get screen address of widget 
+    clc
+    sta tui_ptr+0
+    stx tui_ptr+1
+    lda tui_widget+0        ; get type
+    bpl @exit               ; exit if not "active"
+    cmp #130                ; TUI_INP
+    beq @tui_inp
+    ldy tui_widget+3        ; get widget len        
+    dey
+@inv:
+    lda #$80
+    eor (tui_ptr),y 
+    sta (tui_ptr),y 
+    dey
+    bpl @inv
+    bmi @exit               ; always
+
+@tui_inp:
+    lda tui_widget+4
+    sta tui_ptr2+0
+    lda tui_widget+5
+    sta tui_ptr2+1
+    ldy #$ff                  
+@strlen:
+    iny
+    lda (tui_ptr2),Y        ; widget->data[y]
+    bne @strlen
+    lda #' '
+    cmp (tui_ptr),y
+    bne @cursor_off
+    lda #$80
+    eor (tui_ptr),y
+@cursor_off:
+    sta (tui_ptr),y
+@exit:
+    rts
+.endproc
+
