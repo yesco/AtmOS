@@ -28,6 +28,9 @@ const char txt_tape[] = "Cassette";
 const char txt_tap[] = "tap:";
 const char txt_byte[] = "\024Auto \x10";
 const char txt_bit[] = "\024Bits \x10";
+const char txt_rom[] = "Oric ROM";
+const char txt_basic11[] = "\024Basic 1.1 \x10";
+const char txt_basic10[] = "\024Basic 1.0 \x10";
 const char txt_mouse[] = "Mouse";
 const char txt_x[] = "[x]";
 const char txt_on[] = "\x14on  \x10";
@@ -104,13 +107,14 @@ tui_widget ui[] = {
     { TUI_TXT,   1, 8,10, txt_tape },{ TUI_SEL, 12, 8, 6, txt_off },
     { TUI_SEL,  19, 8, 7, txt_byte },
     { TUI_TXT,   3, 9, 4, txt_tap }, { TUI_SEL,   8, 9,18, loci_cfg.drv_names[4] },
-    { TUI_TXT,   1,12,10, txt_mouse }, { TUI_SEL, 12,12, 6, txt_off },
-    { TUI_TXT,   1,14,10, txt_map },
-    { TUI_SEL,  30, 14, 1, txt_neg},
-    { TUI_TXT,  29, 14, 1, txt_alt},
-    { TUI_TXT,  33, 14, 2, txt_rv1},
-    { TUI_TXT,  29, 14, 1, txt_std},
-    { TUI_SEL,  36, 14, 1, txt_ffw},
+    { TUI_TXT,   1,11, 8, txt_rom }, { TUI_SEL,  12,11,12, txt_basic11 },
+    { TUI_TXT,   1,13,10, txt_mouse }, { TUI_SEL, 12,13, 6, txt_off },
+    { TUI_TXT,   1,19,10, txt_map },
+    { TUI_SEL,  30, 19, 1, txt_neg},
+    { TUI_TXT,  29, 19, 1, txt_alt},
+    { TUI_TXT,  33, 19, 2, txt_rv1},
+    { TUI_TXT,  29, 19, 1, txt_std},
+    { TUI_SEL,  36, 19, 1, txt_ffw},
 
     { TUI_NOP,  32, 0, 7, txt_usb},
 
@@ -134,11 +138,11 @@ tui_widget ui[] = {
     { TUI_NOP,  38,  9, 1, txt_locked},
     { TUI_SEL,  31, 27, 8, txt_boot},
 
-    { TUI_TXT,   1, 15, 8, txt_timing},
-    { TUI_TXT,  30, 15, 8, txt_tior},
-    { TUI_TXT,  30, 16, 8, txt_tiow},
-    { TUI_TXT,  30, 17, 8, txt_tiod},
-    { TUI_TXT,  30, 18, 8, txt_tadr},
+    { TUI_TXT,   1, 20, 8, txt_timing},
+    { TUI_TXT,  30, 20, 8, txt_tior},
+    { TUI_TXT,  30, 21, 8, txt_tiow},
+    { TUI_TXT,  30, 22, 8, txt_tiod},
+    { TUI_TXT,  30, 23, 8, txt_tadr},
 
     { TUI_END,   0, 0, 0, 0 }
 };
@@ -150,19 +154,20 @@ tui_widget ui[] = {
 #define IDX_TAP_ON 13
 #define IDX_TAP_BIT 14
 #define IDX_TAP 16
-#define IDX_MOU_ON 18
-#define IDX_MAP_REW 20
-#define IDX_MAP_RV1 22
-#define IDX_MAP_FFW 24
-#define IDX_TAP_REW 27
-#define IDX_TAP_CNT 28
-#define IDX_EJECT_TAP 29
-#define IDX_EJECT_DF0 34
-#define IDX_EJECT_DF1 35
-#define IDX_EJECT_DF2 36
-#define IDX_EJECT_DF3 37
-#define IDX_BOOT 44
-#define IDX_TIOR 46
+#define IDX_ROM 18
+#define IDX_MOU_ON 20
+#define IDX_MAP_REW 22
+#define IDX_MAP_RV1 24
+#define IDX_MAP_FFW 26
+#define IDX_TAP_REW 29
+#define IDX_TAP_CNT 30
+#define IDX_EJECT_TAP 31
+#define IDX_EJECT_DF0 36
+#define IDX_EJECT_DF1 37
+#define IDX_EJECT_DF2 38
+#define IDX_EJECT_DF3 39
+#define IDX_BOOT 46
+#define IDX_TIOR 48
 
 const uint8_t tui_eject_idx[] = { 
     IDX_EJECT_DF0, 
@@ -394,6 +399,15 @@ void update_mode_btn(uint8_t idx, uint8_t on){
     tui_draw_widget(idx);
 }
 
+void update_rom_btn(uint8_t idx, uint8_t on){
+    if(on){
+        tui_set_data(idx,txt_basic11);
+    }else{
+        tui_set_data(idx,txt_basic10);
+    }
+    tui_draw_widget(idx);
+}
+
 void update_eject_btn(uint8_t drv){
     tui_widget* widget;
     uint8_t idx;
@@ -587,6 +601,11 @@ void DisplayKey(unsigned char key)
                         loci_cfg.bit_on ^= 0x01;
                         update_mode_btn(IDX_TAP_BIT,loci_cfg.bit_on);
                         tui_toggle_highlight(IDX_TAP_BIT);
+                        break;
+                    case(IDX_ROM):
+                        loci_cfg.b11_on ^= 0x01;
+                        update_rom_btn(IDX_ROM,loci_cfg.b11_on);
+                        tui_toggle_highlight(IDX_ROM);
                         break;
                     case(IDX_DF0):
                     case(IDX_DF1):
@@ -1027,6 +1046,7 @@ void main(void){
     update_onoff_btn(IDX_TAP_ON,loci_cfg.tap_on);
     update_onoff_btn(IDX_MOU_ON,loci_cfg.mou_on);
     update_mode_btn(IDX_TAP_BIT,loci_cfg.bit_on);
+    update_rom_btn(IDX_ROM,loci_cfg.b11_on);
 
     for(i=0; i<=4; i++)
         update_eject_btn(i);
