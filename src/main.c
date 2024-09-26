@@ -29,8 +29,8 @@ const char txt_tap[] = "tap:";
 const char txt_byte[] = "\024Auto \x10";
 const char txt_bit[] = "\024Bits \x10";
 const char txt_rom[] = "Oric ROM";
-const char txt_basic11[] = "\024Basic 1.1 \x10";
-const char txt_basic10[] = "\024Basic 1.0 \x10";
+const char txt_basic11[] = "\024Atmos \x10";
+const char txt_basic10[] = "\024Oric-1\x10";
 const char txt_mouse[] = "Mouse";
 const char txt_x[] = "[x]";
 const char txt_on[] = "\x14on  \x10";
@@ -107,7 +107,7 @@ tui_widget ui[] = {
     { TUI_TXT,   1, 8,10, txt_tape },{ TUI_SEL, 12, 8, 6, txt_off },
     { TUI_SEL,  19, 8, 7, txt_byte },
     { TUI_TXT,   3, 9, 4, txt_tap }, { TUI_SEL,   8, 9,18, loci_cfg.drv_names[4] },
-    { TUI_TXT,   1,11, 8, txt_rom }, { TUI_SEL,  12,11,12, txt_basic11 },
+    { TUI_TXT,   1,11, 8, txt_rom }, { TUI_SEL,  12,11, 8, txt_basic11 },
     { TUI_TXT,   1,13,10, txt_mouse }, { TUI_SEL, 12,13, 6, txt_off },
     { TUI_TXT,   1,19,10, txt_map },
     { TUI_SEL,  30, 19, 1, txt_neg},
