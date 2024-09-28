@@ -3,6 +3,7 @@
 ; ---------------------------------------------------------------------------
 
 .export _tui_org_list, _tui_screen_xy, _tui_cls, _tui_fill, _tui_hit, _tui_toggle_highlight
+.export _tui_clear_txt
 .import popa, popax
 
 .define TUI_SCREEN $BB80
@@ -156,7 +157,9 @@ tui_row_offset:
     rts
 .endproc
 
-.proc _tui_toggle_highlight
+;widget idx in A
+;returns addr of widget in tui_ptr
+.proc tui_idx_to_addr
     ldy #0
     sty tui_ptr+0
     sty tui_ptr+1
@@ -179,6 +182,11 @@ tui_row_offset:
     lda _tui_org_list+1
     adc tui_ptr+1
     sta tui_ptr+1
+    rts
+.endproc
+
+.proc _tui_toggle_highlight
+    jsr tui_idx_to_addr
     ldy #5
 @loop:
     lda (tui_ptr),y         ; get widget copy
@@ -233,3 +241,30 @@ tui_row_offset:
     rts
 .endproc
 
+
+.proc _tui_clear_txt
+    jsr tui_idx_to_addr
+    ldy #3
+    lda (tui_ptr),y         ;get widget->len
+    sta tui_len
+    dey
+    clc
+    lda (tui_ptr),y         ;get widget->y
+    adc (_tui_org_list),y   ;add org y
+    tax
+    dey
+    clc
+    lda (tui_ptr),y         ;get widget->x
+    adc (_tui_org_list),y   ;add org x
+    jsr tui_screen_xy
+    sta tui_ptr+0
+    stx tui_ptr+1
+    ldy tui_len
+    dey
+    lda #' '
+@loop:
+    sta (tui_ptr),y
+    dey
+    bpl @loop
+    rts
+.endproc

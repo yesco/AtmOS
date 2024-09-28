@@ -93,13 +93,6 @@ void tui_draw_txt(unsigned char widget_idx){
     }
 }
 
-void tui_clear_txt(uint8_t widget_idx){
-    char* txt = TUI_SCREEN_XY(tui_org_list->x + tui_org_list[widget_idx].x, tui_org_list->y + tui_org_list[widget_idx].y);
-    uint8_t len = tui_org_list[widget_idx].len;
-    do{
-        txt[--len] = ' ';
-    }while(len);
-}
 
 void tui_set_current(uint8_t widget_idx){
     tui_toggle_highlight(tui_current);      //Un-highlight previous
