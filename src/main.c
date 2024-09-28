@@ -883,6 +883,9 @@ void DisplayKey(unsigned char key)
                         case('m'):
                             tui_set_current(IDX_MOU_ON);
                             break;
+                        case('o'):
+                            tui_set_current(IDX_ROM);
+                            break;
                         case('r'):
                             tui_set_current(IDX_MAP_REW);
                             break;
