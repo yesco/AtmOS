@@ -382,6 +382,7 @@ void boot(void){
     VIA.ier = 0xC0;
     tui_cls(3);
     tui_draw(ui);
+    DBG_STATUS("!ROM");
 }
 
 void update_onoff_btn(uint8_t idx, uint8_t on){
