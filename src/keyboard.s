@@ -137,15 +137,11 @@ _KeyAsciiLower:
 
     ; Tell AY this is Register Number 
     lda #$FF 
-    nop
-    nop
     sta VIA_PCR
 
     ; Clear CB2, as keeping it high hangs on some orics.
     ; Pitty, as all this code could be run only once, otherwise
     ldy #$dd
-    nop
-    nop 
     sty VIA_PCR 
 
     ldx #7 
@@ -158,12 +154,8 @@ loop_row:   ;Clear relevant bank
 
     sta VIA_PA2 
     lda #$fd 
-    nop
-    nop
     sta VIA_PCR 
     lda #$dd
-    nop
-    nop
     sta VIA_PCR
 
 
@@ -195,12 +187,8 @@ loop_column:
 
     sta VIA_PA2 
     lda #$fd 
-    nop
-    nop
     sta VIA_PCR
     lda #$dd
-    nop
-    nop
     sta VIA_PCR
 
     lda VIA_PB 
