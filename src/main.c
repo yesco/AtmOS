@@ -1064,6 +1064,9 @@ void main(void){
     //parse_files_to_widget();
     //tui_draw(popup);
     //tui_draw_box(10,28);
+    
+    InitKeyboard();
+
     while(1){
         char kb;
         unsigned char key = ReadKeyNoBounce();

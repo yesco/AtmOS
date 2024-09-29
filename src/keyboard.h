@@ -9,6 +9,8 @@
 // Initialization of ISR
 //extern void InitIRQ();
 
+extern void InitKeyboard();
+
 // Virtual keyboard matrix organized as follows:                     
 // - byte is row number (selected through AY)  
 // - bit in byte indicates the row (selected through the VIA port B) numbered 76543210 

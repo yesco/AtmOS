@@ -3,6 +3,7 @@
 
 .importzp sp, sreg
 
+.export _InitKeyboard
 .export _KeyMatrix, _KeyRowArrows, _KeyAsciiUpper, _KeyAsciiLower, _KeyCapsLock, _ReadKey, _ReadKeyNoBounce
 .export ReadKeyboard
 
@@ -101,7 +102,32 @@ _KeyAsciiLower:
 
 .code 
 
+.proc _InitKeyboard
+    pha
+    ; Write Status Register Number to PortA 
+    lda #$07 
+    sta VIA_PA2 
 
+    ; Tell AY this is Register Number 
+    lda #$FF 
+    sta VIA_PCR 
+
+    ; Clear CB2, as keeping it high hangs on some orics.
+    ; Pitty, as all this code could be run only once, otherwise
+    lda #$dd 
+    sta VIA_PCR 
+
+    lda #$40    ;Enable port output on 8912 
+
+    sta VIA_PA2 
+    lda #$fd 
+    sta VIA_PCR 
+    lda #$dd
+    sta VIA_PCR
+
+    pla
+    rts
+.endproc
 
 .proc ReadKeyboard
 
@@ -111,11 +137,15 @@ _KeyAsciiLower:
 
     ; Tell AY this is Register Number 
     lda #$FF 
+    nop
+    nop
     sta VIA_PCR
 
     ; Clear CB2, as keeping it high hangs on some orics.
     ; Pitty, as all this code could be run only once, otherwise
-    ldy #$dd 
+    ldy #$dd
+    nop
+    nop 
     sty VIA_PCR 
 
     ldx #7 
@@ -128,8 +158,12 @@ loop_row:   ;Clear relevant bank
 
     sta VIA_PA2 
     lda #$fd 
+    nop
+    nop
     sta VIA_PCR 
     lda #$dd
+    nop
+    nop
     sta VIA_PCR
 
 
@@ -161,8 +195,12 @@ loop_column:
 
     sta VIA_PA2 
     lda #$fd 
+    nop
+    nop
     sta VIA_PCR
     lda #$dd
+    nop
+    nop
     sta VIA_PCR
 
     lda VIA_PB 
