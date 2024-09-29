@@ -2,8 +2,9 @@
 ; tui_asm.s
 ; ---------------------------------------------------------------------------
 
-.export _tui_org_list, _tui_screen_xy, _tui_cls, _tui_fill, _tui_hit, _tui_toggle_highlight
-.export _tui_clear_txt
+.export _tui_org_list, _tui_current
+.export _tui_screen_xy, _tui_cls, _tui_fill, _tui_hit, _tui_toggle_highlight
+.export _tui_clear_txt, _tui_set_current, _tui_get_current
 .import popa, popax
 
 .define TUI_SCREEN $BB80
@@ -15,6 +16,7 @@ tui_ptr2:   .res 2
 tui_tmp:    .res 1
 
 .bss
+_tui_current: .res 1
 tui_x:      .res 1
 tui_y:      .res 1
 tui_len:    .res 1
@@ -266,5 +268,20 @@ tui_row_offset:
     sta (tui_ptr),y
     dey
     bpl @loop
+    rts
+.endproc
+
+.proc _tui_set_current
+    pha
+    lda _tui_current
+    jsr _tui_toggle_highlight
+    pla
+    sta _tui_current
+    jsr _tui_toggle_highlight
+    rts
+.endproc
+
+.proc _tui_get_current
+    lda _tui_current
     rts
 .endproc

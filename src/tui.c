@@ -5,7 +5,7 @@
 extern tui_widget *tui_org_list;
 #pragma zpsym ("tui_org_list");
 
-static uint8_t tui_current;
+extern uint8_t tui_current;
 
 void tui_fill(unsigned char len, unsigned char ch, char* buf);
 
@@ -91,17 +91,6 @@ void tui_draw_txt(unsigned char widget_idx){
     for(i=0; i<len && str[i]; i++){
         TUI_PUTC(tui_org_list->x + x + i, tui_org_list->y + y, str[i]);
     }
-}
-
-
-void tui_set_current(uint8_t widget_idx){
-    tui_toggle_highlight(tui_current);      //Un-highlight previous
-    tui_current = widget_idx;
-    tui_toggle_highlight(tui_current);      //Highlight new
-}
-
-uint8_t tui_get_current(void){
-    return tui_current;
 }
 
 void tui_set_data(uint8_t widget_idx, const char* data){
