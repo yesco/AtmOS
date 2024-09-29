@@ -69,19 +69,27 @@ _init:
 
     ; Tell AY this is Register Number 
     lda #$FF 
+    nop
+    nop
     sta VIA_PCR 
 
     ; Clear CB2, as keeping it high hangs on some orics.
     ; Pitty, as all this code could be run only once, otherwise
     ldy #$dd 
+    nop
+    nop
     sty VIA_PCR 
 
     lda #$40    ;Enable port output on 8912 
 
     sta VIA_PA2 
     lda #$fd 
+    nop
+    nop
     sta VIA_PCR 
     lda #$dd
+    nop
+    nop
     sta VIA_PCR
 
     cli
