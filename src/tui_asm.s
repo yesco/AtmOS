@@ -4,7 +4,7 @@
 
 .export _tui_org_list, _tui_current
 .export _tui_screen_xy, _tui_cls, _tui_fill, _tui_hit, _tui_toggle_highlight
-.export _tui_clear_txt, _tui_set_current, _tui_get_current
+.export _tui_clear_txt, _tui_set_current, _tui_get_current, _tui_draw_txt
 .import popa, popax
 
 .define TUI_SCREEN $BB80
@@ -31,11 +31,13 @@ tui_row_offset:
 .code
 
 ; Calculate memory address of x,y position of screen
+; y in reg a, x on c-stack
 .proc _tui_screen_xy
     tax
     jsr popa
 .endproc
 
+; x in reg a, y in reg x
 .proc tui_screen_xy
     ;OR instead of adc as x is <= 40 and <TUI_SCREEN is 0x80
     ora #<TUI_SCREEN
@@ -187,14 +189,20 @@ tui_row_offset:
     rts
 .endproc
 
-.proc _tui_toggle_highlight
-    jsr tui_idx_to_addr
+;copy current widget to tui_widget
+.proc tui_cpy_widget
     ldy #5
 @loop:
     lda (tui_ptr),y         ; get widget copy
     sta tui_widget,y
     dey
     bpl @loop
+    rts
+.endproc
+
+.proc _tui_toggle_highlight
+    jsr tui_idx_to_addr
+    jsr tui_cpy_widget
     clc
     ldy #2
     lda (_tui_org_list),y   ; orig Y
@@ -283,5 +291,37 @@ tui_row_offset:
 
 .proc _tui_get_current
     lda _tui_current
+    rts
+.endproc
+
+.proc _tui_draw_txt
+    jsr tui_idx_to_addr
+    jsr tui_cpy_widget
+    lda tui_widget+2        ;calc widget->x + org->x
+    clc
+    ldy #2
+    adc (_tui_org_list),y
+    tax
+    lda tui_widget+1        ;calc widget->y + org->y
+    dey
+    clc
+    adc (_tui_org_list),y   ;screen widget pointer
+    jsr tui_screen_xy
+    sta tui_ptr+0           
+    stx tui_ptr+1
+    lda tui_widget+4        ;widget data pointer
+    sta tui_ptr2+0
+    lda tui_widget+5
+    sta tui_ptr2+1
+    ldy #0                  ;positive direction loop
+@loop:
+    cpy tui_widget+3        ;compare to widget->len
+    beq @exit
+    lda (tui_ptr2),y
+    beq @exit
+    sta (tui_ptr),y 
+    iny
+    bne @loop               ;branch always
+@exit:
     rts
 .endproc

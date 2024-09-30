@@ -81,18 +81,6 @@ void tui_draw_box(unsigned char widget_idx){
     } 
 }
 
-void tui_draw_txt(unsigned char widget_idx){
-    tui_widget* widget = &tui_org_list[widget_idx];
-    unsigned char x = widget->x;
-    unsigned char y = widget->y;
-    unsigned char len = widget->len;
-    char *str = widget->data;
-    uint8_t i;
-    for(i=0; i<len && str[i]; i++){
-        TUI_PUTC(tui_org_list->x + x + i, tui_org_list->y + y, str[i]);
-    }
-}
-
 void tui_set_data(uint8_t widget_idx, const char* data){
     tui_org_list[widget_idx].data = data;
 }
