@@ -5,6 +5,7 @@
 .export _tui_org_list, _tui_current
 .export _tui_screen_xy, _tui_cls, _tui_fill, _tui_hit, _tui_toggle_highlight
 .export _tui_clear_txt, _tui_set_current, _tui_get_current, _tui_draw_txt
+.export _tui_next_active, _tui_prev_active, _tui_clear_box
 .import popa, popax
 
 .define TUI_SCREEN $BB80
@@ -95,6 +96,8 @@ tui_row_offset:
 .proc _tui_fill
     sta tui_ptr+0
     stx tui_ptr+1
+    tya
+    pha
     jsr popa
     pha
     jsr popa
@@ -104,6 +107,8 @@ tui_row_offset:
     dey
     sta (tui_ptr),y
     bne @loop
+    pla
+    tay
     rts
 .endproc
 
@@ -323,5 +328,82 @@ tui_row_offset:
     iny
     bne @loop               ;branch always
 @exit:
+    rts
+.endproc
+
+.proc _tui_next_active
+    ldx _tui_current
+    txa
+    jsr tui_idx_to_addr
+    ldy #0
+    lda (tui_ptr),y
+    beq @exit
+@loop:
+    inx
+    txa
+    jsr tui_idx_to_addr
+    ldy #0
+    lda (tui_ptr),y
+    beq @exit
+    bmi @found
+    bpl @loop
+@found:
+    txa
+    jsr _tui_set_current
+@exit:
+    rts 
+.endproc
+
+.proc _tui_prev_active
+    ldx _tui_current
+    beq @exit
+@loop:
+    dex
+    beq @exit
+    txa
+    jsr tui_idx_to_addr
+    ldy #0
+    lda (tui_ptr),y
+    bmi @found
+    bpl @loop
+@found:
+    txa
+    jsr _tui_set_current
+@exit:
+    rts 
+.endproc
+
+.proc _tui_clear_box
+    jsr tui_idx_to_addr
+    ldy #2
+    lda (tui_ptr),y         ;h in tui_y
+    sta tui_y
+    lda (_tui_org_list),y   ;y in x
+    tax
+    dey
+    lda (tui_ptr),y         ;w in tui_x
+    sta tui_x
+    lda (_tui_org_list),y   ;x in a
+    jsr tui_screen_xy       ;box upper corner addr in tui_ptr
+    stx tui_ptr+1
+    sta tui_ptr+0
+    ldx tui_y               ;h in x
+@looph:
+    lda #' '
+    ldy tui_x               ;w in y
+    dey
+@loopw:
+    sta (tui_ptr),y 
+    dey
+    bpl @loopw
+    clc
+    lda #40
+    adc tui_ptr+0
+    sta tui_ptr+0
+    lda #0
+    adc tui_ptr+1
+    sta tui_ptr+1
+    dex
+    bne @looph
     rts
 .endproc

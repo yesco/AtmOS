@@ -59,7 +59,6 @@ const char* tui_get_data(uint8_t widget_idx);
 enum tui_type tui_get_type(uint8_t widget_idx);
 unsigned char tui_get_len(uint8_t widget_idx);
 
-void tui_draw_clr(uint8_t w, uint8_t h);
 void tui_draw_box(uint8_t widget_idx);
 void tui_clear_box(uint8_t widget_idx);
 void tui_draw_txt(uint8_t widget_idx);

@@ -49,17 +49,6 @@ void tui_draw_widget(uint8_t widget_idx){
     }
 }
 
-void tui_draw_clr(uint8_t w, uint8_t h){
-    tui_widget* org = tui_org_list;
-    uint8_t j;
-    for(j = org->y; j < (org->y+h); j++){
-        tui_fill(w,' ',TUI_SCREEN_XY(org->x,j));
-    } 
-}
-
-void tui_clear_box(uint8_t widget_idx){
-    tui_draw_clr(tui_org_list[widget_idx].x,tui_org_list[widget_idx].y);
-}
 
 void tui_draw_box(unsigned char widget_idx){
     tui_widget* widget = &tui_org_list[widget_idx];
@@ -94,6 +83,7 @@ unsigned char tui_get_len(uint8_t widget_idx){
     return tui_org_list[widget_idx].len;
 }
 
+/*
 void tui_next_active(void){
     int8_t i;
     tui_widget* widget = &tui_org_list[tui_current];
@@ -119,3 +109,4 @@ void tui_prev_active(void){
     }
 
 }
+*/
