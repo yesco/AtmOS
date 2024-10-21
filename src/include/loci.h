@@ -186,6 +186,7 @@ int __fastcall__ tune_tadr (unsigned char delay);
 void __fastcall__ tune_scan_enable (void);
 
 void __fastcall__ mia_restore_state(void);
+unsigned char __fastcall__ mia_restore_buffer_ok(void);
 
 /* XREG location helpers */
 
