@@ -24,7 +24,8 @@ RSTR_LAST := (RSTR_SIZE - 1)
 .endproc
 ;fall-through
 .proc mia_save_registers
-;save a,y,x and sp to xstack
+;save flags to stack, a,y,x and sp to xstack
+    php
     sta MIA_XSTACK          
     sty MIA_XSTACK
     stx MIA_XSTACK
@@ -219,8 +220,7 @@ RSTR_LAST := (RSTR_SIZE - 1)
     sta MIA_ADDR0+1
     lda #0
     sta RSTR_PTR
-    lda MIA_RW0         ;Stash $00 value in y
-    tay
+    ldy MIA_RW0         ;Stash $00 value in yﬂ
     ldx #1
 @loop:
     lda MIA_RW0
@@ -253,6 +253,12 @@ RSTR_LAST := (RSTR_SIZE - 1)
     sta VIA_T1LH
     sta VIA_T1CH
     bit VIA_T1CL        ;Clear T1 IRQ flag
+    bit VIA_IER         ;Check T1 enabled
+    bvc @skip
+@waitirq:               ;Wait for real IRQ if T1 enabled
+    bit VIA_IFR
+    bvc @waitirq
+@skip:
     ldx MIA_XSTACK
     txs 
     ldx MIA_XSTACK
@@ -267,5 +273,6 @@ RSTR_LAST := (RSTR_SIZE - 1)
     lda #MIA_OP_BOOT
     sta MIA_OP
     lda MIA_XSTACK
+    plp
     jmp MIA_SPIN
 .endproc
