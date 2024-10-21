@@ -52,6 +52,21 @@ MIA_OP_WRITE_XRAM         := $19
 MIA_OP_LSEEK              := $1A
 MIA_OP_UNLINK             := $1B
 MIA_OP_RENAME             := $1C
+MIA_OP_OPENDIR            := $80
+MIA_OP_CLOSEDIR           := $81
+MIA_OP_READDIR            := $82
+MIA_OP_MOUNT              := $90
+MIA_OP_UMOUNT             := $91
+MIA_OP_TAP_SEEK           := $92
+MIA_OP_TAP_TELL           := $93
+MIA_OP_TAP_HDR            := $94
+MIA_OP_BOOT               := $A0
+MIA_OP_TUNE_TMAP          := $A1
+MIA_OP_TUNE_TIOR          := $A2
+MIA_OP_TUNE_TIOW          := $A3
+MIA_OP_TUNE_TIOD          := $A4
+MIA_OP_TUNE_TADR          := $A5
+MIA_OP_TUNE_SCAN          := $A6
 
 ; 6522 VIA
 VIA             := $0300        ; VIA base address

@@ -47,10 +47,13 @@ const char txt_unlocked[] = "\"";
 const char txt_warn_sign[] = "\x01!\x03";
 const char txt_dir_warning[] = "Max files. Use filter";
 const char txt_boot[] = "\x13\004Boot  ";
+const char txt_return[] = "\x13\004Return  \x10";
 const char txt_spinner[] = "/-\\|";
 const char txt_map[] = "RV1 adjust";
 const char txt_timing[] = "Timing";
 const char txt_filter[] = "[      ]";
+const char txt_booting[] = "Booting";
+const char txt_returning[] = "Returning";
 char txt_rv1[] = "--";
 char txt_tior[] = "tior --";
 char txt_tiow[] = "tiow --";
@@ -78,6 +81,8 @@ char dir_rpage[2];
 uint8_t dir_needs_refresh;
 #define DIR_PAGE_SIZE 24
 
+bool return_possible;
+
 struct _loci_cfg loci_cfg;
 
 extern void init_display(void);
@@ -87,7 +92,7 @@ int dir_cmp(const void *lhsp,const void *rhsp);
 uint8_t dir_fill(char* dname);
 uint8_t tap_fill(void);
 void parse_files_to_widget(void);
-void boot(void);
+void boot(bool do_return);
 void update_onoff_btn(uint8_t idx, uint8_t on);
 void update_eject_btn(uint8_t drv);
 void do_eject(uint8_t drv, uint8_t ui_idx);
@@ -136,6 +141,7 @@ tui_widget ui[] = {
     { TUI_NOP,  38,  6, 1, txt_unlocked},
     { TUI_TXT,  37,  9, 1, txt_alt},
     { TUI_NOP,  38,  9, 1, txt_locked},
+    { TUI_NOP,  20, 27,11, txt_return},
     { TUI_SEL,  31, 27, 8, txt_boot},
 
     { TUI_TXT,   1, 20, 8, txt_timing},
@@ -166,8 +172,9 @@ tui_widget ui[] = {
 #define IDX_EJECT_DF1 37
 #define IDX_EJECT_DF2 38
 #define IDX_EJECT_DF3 39
-#define IDX_BOOT 46
-#define IDX_TIOR 48
+#define IDX_RETURN 46
+#define IDX_BOOT 47
+#define IDX_TIOR 49
 
 const uint8_t tui_eject_idx[] = { 
     IDX_EJECT_DF0, 
@@ -369,16 +376,24 @@ void parse_files_to_widget(void){
 
 int8_t calling_widget = -1;
 
-void boot(void){
+void boot(bool do_return){
+    char* boot_text;
+    if(do_return && return_possible)
+        boot_text = &txt_returning;
+    else
+        boot_text = &txt_booting;
     tui_cls(3);
-    strcpy(TUI_SCREEN_XY_CONST(17,14),"Booting");
+    strcpy(TUI_SCREEN_XY_CONST(17,14),boot_text);
     loci_cfg.tui_pos = tui_get_current();
     persist_set_loci_cfg(&loci_cfg);
     persist_set_magic();
     mia_set_ax(0x80 | (loci_cfg.bit_on <<3) | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
     //mia_set_ax(0x00 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
     VIA.ier = 0x7F;         //Disable VIA interrupts
-    mia_call_int_errno(MIA_OP_BOOT);    //Only returns if boot fails
+    if(do_return)
+        mia_restore_state();
+    else
+        mia_call_int_errno(MIA_OP_BOOT);    //Only returns if boot fails
     VIA.ier = 0xC0;
     tui_cls(3);
     tui_draw(ui);
@@ -644,8 +659,11 @@ void DisplayKey(unsigned char key)
                             tui_set_current(POPUP_FILE_START);
                         dir_needs_refresh = true;
                         break;
+                    case(IDX_RETURN):
+                        boot(true);
+                        break;
                     case(IDX_BOOT):
-                        boot();
+                        boot(false);
                         break;
                     case(IDX_MAP_REW):
                         if(rv1 > 0) 
@@ -819,6 +837,9 @@ void DisplayKey(unsigned char key)
                     tui_draw(warning);
                 }
             }
+            if(calling_widget == -1){
+                boot(true);
+            }
             //screen[y++] = 0x00;
             //dir_fill(screen);
             //if(strisquint(screen,filter)){
@@ -838,7 +859,7 @@ void DisplayKey(unsigned char key)
                 break;
             }
             if(calling_widget == -1){   //Return to Oric
-                boot();
+                boot(false);
             }else{                      //Escape from popup
                 tui_clear_box(1);
                 tui_draw(ui);
@@ -1021,6 +1042,9 @@ void main(void){
     sprintf(txt_title,"LOCI " __DATE__ " FW %d.%d.%d",
         locifw_version[2], locifw_version[1], locifw_version[0]);
     #endif
+
+    return_possible = mia_restore_buffer_ok();
+
     tui_cls(3);
  
     if(!persist_get_loci_cfg(&loci_cfg)){
@@ -1054,6 +1078,10 @@ void main(void){
     update_onoff_btn(IDX_MOU_ON,loci_cfg.mou_on);
     update_mode_btn(IDX_TAP_BIT,loci_cfg.bit_on);
     update_rom_btn(IDX_ROM,loci_cfg.b11_on);
+    if(return_possible){
+        tui_set_type(IDX_RETURN, TUI_SEL);
+        tui_draw_widget(IDX_RETURN);
+    }
 
     for(i=0; i<=4; i++)
         update_eject_btn(i);

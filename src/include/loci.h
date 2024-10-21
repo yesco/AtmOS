@@ -185,6 +185,9 @@ int __fastcall__ tune_tiod (unsigned char delay);
 int __fastcall__ tune_tadr (unsigned char delay);
 void __fastcall__ tune_scan_enable (void);
 
+void __fastcall__ mia_restore_state(void);
+unsigned char __fastcall__ mia_restore_buffer_ok(void);
+
 /* XREG location helpers */
 
 #define xreg_mia_keyboard(...) xreg(0, 0, 0, __VA_ARGS__)

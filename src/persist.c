@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include "persist.h"
 
-#define XRAM_PERSIST_ADDR 0x2000
+#define XRAM_PERSIST_ADDR 0x8000
 typedef struct persist_data {
     uint8_t magic[4];
     loci_cfg_t loci_cfg;

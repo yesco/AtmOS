@@ -4,7 +4,9 @@
 
 .export _tui_org_list, _tui_current
 .export _tui_screen_xy, _tui_cls, _tui_fill, _tui_hit, _tui_toggle_highlight
-.export _tui_clear_txt, _tui_set_current, _tui_get_current
+.export _tui_clear_txt, _tui_set_current, _tui_get_current, _tui_draw_txt
+.export _tui_next_active, _tui_prev_active, _tui_clear_box, _tui_draw_box
+.export _tui_set_data, _tui_get_data, _tui_set_type, _tui_get_type, _tui_get_len
 .import popa, popax
 
 .define TUI_SCREEN $BB80
@@ -31,11 +33,13 @@ tui_row_offset:
 .code
 
 ; Calculate memory address of x,y position of screen
+; y in reg a, x on c-stack
 .proc _tui_screen_xy
     tax
     jsr popa
 .endproc
 
+; x in reg a, y in reg x
 .proc tui_screen_xy
     ;OR instead of adc as x is <= 40 and <TUI_SCREEN is 0x80
     ora #<TUI_SCREEN
@@ -90,14 +94,25 @@ tui_row_offset:
     rts
 .endproc
 
+; ptr in ax, char on stack, len on stack
 .proc _tui_fill
     sta tui_ptr+0
     stx tui_ptr+1
+    tya
+    pha
     jsr popa
     pha
     jsr popa
     tay
     pla
+    jsr tui_fill
+    pla
+    tay
+    rts
+.endproc
+;local version
+;ptr in tui_ptr, char in a, len in y
+.proc tui_fill
 @loop:
     dey
     sta (tui_ptr),y
@@ -187,14 +202,20 @@ tui_row_offset:
     rts
 .endproc
 
-.proc _tui_toggle_highlight
-    jsr tui_idx_to_addr
+;copy current widget to tui_widget
+.proc tui_cpy_widget
     ldy #5
 @loop:
     lda (tui_ptr),y         ; get widget copy
     sta tui_widget,y
     dey
     bpl @loop
+    rts
+.endproc
+
+.proc _tui_toggle_highlight
+    jsr tui_idx_to_addr
+    jsr tui_cpy_widget
     clc
     ldy #2
     lda (_tui_org_list),y   ; orig Y
@@ -283,5 +304,238 @@ tui_row_offset:
 
 .proc _tui_get_current
     lda _tui_current
+    rts
+.endproc
+
+.proc _tui_draw_txt
+    jsr tui_idx_to_addr
+    jsr tui_cpy_widget
+    lda tui_widget+2        ;calc widget->x + org->x
+    clc
+    ldy #2
+    adc (_tui_org_list),y
+    tax
+    lda tui_widget+1        ;calc widget->y + org->y
+    dey
+    clc
+    adc (_tui_org_list),y   ;screen widget pointer
+    jsr tui_screen_xy
+    sta tui_ptr+0           
+    stx tui_ptr+1
+    lda tui_widget+4        ;widget data pointer
+    sta tui_ptr2+0
+    lda tui_widget+5
+    sta tui_ptr2+1
+    ldy #0                  ;positive direction loop
+@loop:
+    cpy tui_widget+3        ;compare to widget->len
+    beq @exit
+    lda (tui_ptr2),y
+    beq @exit
+    sta (tui_ptr),y 
+    iny
+    bne @loop               ;branch always
+@exit:
+    rts
+.endproc
+
+.proc _tui_next_active
+    ldx _tui_current
+    txa
+    jsr tui_idx_to_addr
+    ldy #0
+    lda (tui_ptr),y
+    beq @exit
+@loop:
+    inx
+    txa
+    jsr tui_idx_to_addr
+    ldy #0
+    lda (tui_ptr),y
+    beq @exit
+    bmi @found
+    bpl @loop
+@found:
+    txa
+    jsr _tui_set_current
+@exit:
+    rts 
+.endproc
+
+.proc _tui_prev_active
+    ldx _tui_current
+    beq @exit
+@loop:
+    dex
+    beq @exit
+    txa
+    jsr tui_idx_to_addr
+    ldy #0
+    lda (tui_ptr),y
+    bmi @found
+    bpl @loop
+@found:
+    txa
+    jsr _tui_set_current
+@exit:
+    rts 
+.endproc
+
+.proc _tui_clear_box
+    jsr tui_idx_to_addr
+    ldy #2
+    lda (tui_ptr),y         ;h in tui_y
+    sta tui_y
+    lda (_tui_org_list),y   ;y in x
+    tax
+    dey
+    lda (tui_ptr),y         ;w in tui_x
+    sta tui_x
+    lda (_tui_org_list),y   ;x in a
+    jsr tui_screen_xy       ;box upper corner addr in tui_ptr
+    stx tui_ptr+1
+    sta tui_ptr+0
+    ldx tui_y               ;h in x
+@looph:
+    lda #' '
+    ldy tui_x               ;w in y
+    dey
+@loopw:
+    sta (tui_ptr),y 
+    dey
+    bpl @loopw
+    clc
+    lda #40
+    adc tui_ptr+0
+    sta tui_ptr+0
+    lda #0
+    adc tui_ptr+1
+    sta tui_ptr+1
+    dex
+    bne @looph
+    rts
+.endproc
+
+; ptr in ax, idx in stack
+.proc _tui_set_data
+    stx tui_ptr2+1
+    sta tui_ptr2+0
+    jsr popa
+    jsr tui_idx_to_addr
+    ldy #5
+    lda tui_ptr2+1
+    sta (tui_ptr),y
+    dey
+    lda tui_ptr2+0
+    sta (tui_ptr),y
+    rts
+.endproc
+
+; idx in a, returns ptr in ax
+.proc _tui_get_data
+    jsr tui_idx_to_addr
+    ldy #5
+    lda (tui_ptr),y
+    tax
+    dey
+    lda (tui_ptr),y
+    rts
+.endproc
+
+; idx in a, returns type in a
+.proc _tui_get_type
+    jsr tui_idx_to_addr
+    ldy #0
+    lda (tui_ptr),y
+    rts
+.endproc
+
+;type in a, idx on stack
+.proc _tui_set_type
+    pha
+    jsr popa
+    jsr tui_idx_to_addr
+    pla
+    ldy #0
+    sta (tui_ptr),y
+    rts
+.endproc
+
+; idx in a, returns len in a
+.proc _tui_get_len
+    jsr tui_idx_to_addr
+    ldy #4
+    lda (tui_ptr),y
+    rts
+.endproc
+
+TUI_BOX_UL := '^'
+TUI_BOX_UR := '`'
+TUI_BOX_LL := '~'
+TUI_BOX_LR := $7f
+TUI_BOX_H  := '-'
+TUI_BOX_V  := '|'
+
+.proc _tui_draw_box
+    jsr tui_idx_to_addr
+    jsr tui_cpy_widget
+    ldy #2
+    lda (_tui_org_list),y   ;y
+    tax
+    dey
+    lda (_tui_org_list),y   ;x
+    jsr tui_screen_xy       ;set tui_ptr to screen(x,y)
+    stx tui_ptr+1
+    sta tui_ptr+0
+    lda #TUI_BOX_UR         
+    ldy tui_widget+1        ;w
+    dey
+    sta (tui_ptr),y         ;Upper R corner
+    lda #TUI_BOX_H
+    jsr tui_fill            ;Upper H line (overshoot at UL)
+    lda #TUI_BOX_UL         
+    ldy #0
+    sta (tui_ptr),y         ;Upper L corner
+    jsr tui_draw_hslice     ;overshoot on last line (gets tui_ptr right)
+    lda #TUI_BOX_LR         
+    ldy tui_widget+1        ;w
+    dey
+    sta (tui_ptr),y         ;Lower R corner
+    lda #TUI_BOX_H
+    jsr tui_fill            ;Lower H line (overshoot at LL)
+    lda #TUI_BOX_LL         
+    ldy #0
+    sta (tui_ptr),y         ;Lower L corner
+    rts
+.endproc
+
+; box origo in tui_ptr
+.proc tui_draw_hslice
+    ldx tui_widget+2        ;h-1
+    dex
+    ldy tui_widget+1        ;w-1
+    dey
+    sty tui_tmp
+@looph:
+    clc
+    lda #40                 ;Progress one line
+    adc tui_ptr+0
+    sta tui_ptr+0
+    lda #0
+    adc tui_ptr+1
+    sta tui_ptr+1
+    lda #TUI_BOX_V
+    ldy tui_tmp
+    sta (tui_ptr),y         ;Right edge
+    dey
+    lda #' '
+@loopw:
+    sta (tui_ptr),y         ;Blank middle
+    dey
+    bne @loopw
+    lda #TUI_BOX_V
+    sta (tui_ptr),y         ;Left edge
+    dex
+    bne @looph
     rts
 .endproc
