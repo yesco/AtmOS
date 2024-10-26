@@ -392,8 +392,10 @@ void boot(bool do_return){
     VIA.ier = 0x7F;         //Disable VIA interrupts
     if(do_return)
         mia_restore_state();
-    else
+    else{
+        mia_clear_restore_buffer();
         mia_call_int_errno(MIA_OP_BOOT);    //Only returns if boot fails
+    }
     VIA.ier = 0xC0;
     tui_cls(3);
     tui_draw(ui);

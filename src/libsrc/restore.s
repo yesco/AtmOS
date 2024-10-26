@@ -4,7 +4,7 @@
 ; LOCI save and restore memory functions
 
 .include "loci.inc"
-.export mia_save_state, _mia_restore_state, _mia_restore_buffer_ok
+.export mia_save_state, _mia_restore_state, _mia_restore_buffer_ok, _mia_clear_restore_buffer
 .import _init, _mia_call_int_errno
 
 RSTR_PTR  := $0000
@@ -31,6 +31,18 @@ RSTR_LAST := (RSTR_SIZE - 1)
     beq @exit
     lda #0              ; 0 = false, L = true
 @exit:
+    rts
+.endproc
+
+.proc _mia_clear_restore_buffer
+    lda #1
+    sta MIA_STEP0
+    lda #<RSTR_LAST
+    sta MIA_ADDR0+0
+    lda #>RSTR_LAST
+    sta MIA_ADDR0+1
+    lda #0
+    sta MIA_RW0
     rts
 .endproc
 
