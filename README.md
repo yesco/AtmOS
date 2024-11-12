@@ -4,6 +4,9 @@
 
 The LOCI ROM is a 6502 application mapped in by LOCI and executed by the attached Oric computer to manage floppy or tape image mounting and other features of LOCI, at the user's request.
 
+## Users
+For information on how to use a LOCI device, please refer to the [LOCI User Manual](https://github.com/sodiumlb/loci-hardware/wiki/LOCI-User-Manual)
+
 ## Build instructions
 The current setup requires a working install of CC65 and GNU Make
     sudo apt install cc65 make
