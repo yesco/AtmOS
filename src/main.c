@@ -1025,7 +1025,7 @@ uint8_t auto_tune_tior(void){
         if(mia_pop_char() != i)
             TUI_PUTC(2+i,25,17);
     }
-    i = (uint8_t)(strcasestr(TUI_SCREEN_XY(2, 25), "\x12\x12\x12\x12") - TUI_SCREEN_XY(2, 25) + 4);
+    i = (uint8_t)(strcasestr(TUI_SCREEN_XY_CONST(2, 25), "\x12\x12\x12\x12") - TUI_SCREEN_XY_CONST(2, 25) + 4);
     TUI_PUTC(2+i, 24, 'v');
     tune_tior(i);
     return i;
