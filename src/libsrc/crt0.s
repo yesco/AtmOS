@@ -34,7 +34,7 @@ _init:
     jsr copydata  ; Initialize DATA segment
     jsr copyfont
     jsr copyaltfont
-    jsr copyscrn
+    ;jsr copyscrn
     jsr initlib   ; Run constructors
 
 ; Initialize VIA for keyboard and 25Hz interrupt
