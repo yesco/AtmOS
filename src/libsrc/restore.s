@@ -4,7 +4,7 @@
 ; LOCI save and restore memory functions
 
 .include "loci.inc"
-.export mia_save_state, _mia_restore_state, _mia_restore_buffer_ok, _mia_clear_restore_buffer
+.export mia_save_state, _mia_restore_state, _mia_restore_buffer_ok, _mia_clear_restore_buffer, _mia_get_vmode
 .import _init, _mia_call_int_errno
 
 RSTR_PTR  := $0000
@@ -16,6 +16,7 @@ VMODE_SIZE := 1
 MAGIC_SIZE := 1
 RSTR_SIZE := (RAM_SIZE+VRAM_SIZE+VMODE_SIZE+REGS_SIZE+MAGIC_SIZE)
 RSTR_LAST := (RSTR_SIZE - 1)
+VMODE_ADDR := (RAM_SIZE+VRAM_SIZE)
 
 .code
 
@@ -45,6 +46,18 @@ RSTR_LAST := (RSTR_SIZE - 1)
     sta MIA_RW0
     rts
 .endproc
+
+.proc _mia_get_vmode
+    lda #1
+    sta MIA_STEP0
+    lda #<VMODE_ADDR
+    sta MIA_ADDR0+0
+    lda #>VMODE_ADDR
+    sta MIA_ADDR0+1
+    lda MIA_RW0
+    rts
+.endproc
+
 
 .proc mia_save_state
     cld
@@ -132,8 +145,62 @@ RSTR_LAST := (RSTR_SIZE - 1)
     bne @loop
 .endproc
 ;fall-through
+;ULA mode dependent address jumps
+;Use with ULA pattern matching PIO program ($83848586)
+;   Text  50Hz: BCA0,BCA1,BBB2,BBB3
+;   Hires 50Hz: BCA0,BCA1,A032,A033
+;   Text  60Hz: No transition
+;   Hires 60Hz: BBB0,BBB1,A032,A033
 .proc mia_save_vmode
-    lda $03BF
+    lda #$83            ;50Hz setup
+    sta $BCA0
+    lda #$84
+    sta $BCA1
+    lda #$85
+    sta $BBB2
+    sta $A032
+    lda #$86
+    sta $BBB3
+    sta $A033
+    lda #$5A            ;Text50  $1A | $40
+    sta $BBB4
+    lda #$5F            ;Hires50 $1F | $40
+    sta $A034
+    lda #$86
+    sta $03A3
+    ldx #$00
+    ldy #$10
+@delay:
+    dex 
+    bne @delay
+    dey
+    bne @delay
+    lda $03A3
+    beq @60Hz       ;if not found
+    and #$BF
+    bne @done       ;always taken
+@60Hz:
+    lda #$83
+    sta $BBB0
+    sta $BBB2       ;disable 50Hz test (anything but $85)
+    lda #$84
+    sta $BBB1
+    lda #$5C        ;Hires60 $1C | $40
+    sta $A034
+    lda #$86
+    sta $03A3
+    ldx #$00
+    ldy #$10
+@delay60:
+    dex 
+    bne @delay60
+    dey
+    bne @delay60
+    lda $03A3
+    and #$BF
+    bne @done       ;Hires60
+    lda #$18        ;Text60
+@done:
     sta MIA_RW0
 .endproc
 ;fall-through
@@ -229,7 +296,7 @@ RSTR_LAST := (RSTR_SIZE - 1)
     ldx MIA_RW0
     stx $bfdf
     ldx #$00
-    ldy #$50
+    ldy #$10
 @delay:
     dex 
     bne @delay
@@ -247,7 +314,7 @@ RSTR_LAST := (RSTR_SIZE - 1)
     sta MIA_ADDR0+1
     lda #0
     sta RSTR_PTR
-    ldy MIA_RW0         ;Stash $00 value in yﬂ
+    ldy MIA_RW0         ;Stash $00 value in y
     ldx #1
 @loop:
     lda MIA_RW0

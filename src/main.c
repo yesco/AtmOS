@@ -1083,6 +1083,17 @@ void main(void){
     if(return_possible){
         tui_set_type(IDX_RETURN, TUI_SEL);
         tui_draw_widget(IDX_RETURN);
+        i = mia_get_vmode();
+        //sprintf(TUI_SCREEN_XY_CONST(32,0),"%02x",i);
+        if(i & 0x04)
+            TUI_PUTC_CONST(34,0,'H');   
+        else
+            TUI_PUTC_CONST(34,0,'T');
+        if(i & 0x02)
+            TUI_PUTC_CONST(35,0,'5');   
+        else
+            TUI_PUTC_CONST(35,0,'6');
+        TUI_PUTC_CONST(36,0,'0');
     }
 
     for(i=0; i<=4; i++)
