@@ -71,7 +71,7 @@ char* dbg_status = TUI_SCREEN_XY_CONST(35,1);
 
 char tmp_str[256];
 
-#define DIR_BUF_SIZE 2048
+#define DIR_BUF_SIZE 3072
 char dir_buf[DIR_BUF_SIZE];
 char** dir_ptr_list = (char **)&dir_buf[DIR_BUF_SIZE];  //Reverse array
 unsigned int dir_entries;
