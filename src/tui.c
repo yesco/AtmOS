@@ -26,26 +26,4 @@ void tui_draw(tui_widget* list){
     }
 }
 
-void tui_draw_widget(uint8_t widget_idx){
-    switch(tui_org_list[widget_idx].type){
-        case TUI_BOX:
-            tui_draw_box(widget_idx);
-            break;
-        case TUI_TXT:
-        case TUI_SEL:
-            tui_draw_txt(widget_idx);
-            break;
-        case TUI_INV:
-        case TUI_BTN:
-            tui_draw_txt(widget_idx);
-            tui_toggle_highlight(widget_idx);
-            break;
-        case TUI_INP:
-            tui_clear_txt(widget_idx);
-            tui_draw_txt(widget_idx);
-            break;
-        default:
-            break;
-    }
-}
 

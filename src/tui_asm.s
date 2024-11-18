@@ -7,15 +7,41 @@
 .export _tui_clear_txt, _tui_set_current, _tui_get_current, _tui_draw_txt
 .export _tui_next_active, _tui_prev_active, _tui_clear_box, _tui_draw_box
 .export _tui_set_data, _tui_get_data, _tui_set_type, _tui_get_type, _tui_get_len
+.export _tui_draw_widget
 .import popa, popax
 
 .define TUI_SCREEN $BB80
+.define TUI_ACTIVE 128
+
+.define TUI_DRAW_CTRL $01
+.define TUI_DRAW_TXT $02
+.define TUI_DRAW_BOX $04
+.define TUI_DRAW_INV $08
+.define TUI_DRAW_CLR $10
+.define TUI_DRAW_NOP $20
+.define TUI_DRAW_ACT $80
+
+.enum tui_type 
+    ;Passive widgets and tokens
+    TUI_END = 0
+    TUI_START = TUI_DRAW_CTRL
+    TUI_BOX = TUI_DRAW_BOX
+    TUI_TXT = TUI_DRAW_TXT
+    TUI_INV = TUI_DRAW_TXT | TUI_DRAW_INV
+    TUI_NOP = TUI_DRAW_NOP
+    ;Active widgets
+    TUI_SEL = TUI_DRAW_ACT | TUI_DRAW_TXT                 ;TXT but selectable
+    TUI_BTN = TUI_DRAW_ACT | TUI_DRAW_TXT | TUI_DRAW_INV  ;SEL but reversed paper/ink
+    TUI_INP = TUI_DRAW_ACT | TUI_DRAW_TXT | TUI_DRAW_CLR  ;INPut field
+.endenum
 
 .zeropage
 _tui_org_list: .res 2
 tui_ptr:    .res 2
 tui_ptr2:   .res 2
 tui_tmp:    .res 1
+tui_tmp2:   .res 1
+tui_tmp3:   .res 1
 
 .bss
 _tui_current: .res 1
@@ -231,7 +257,7 @@ tui_row_offset:
     stx tui_ptr+1
     lda tui_widget+0        ; get type
     bpl @exit               ; exit if not "active"
-    cmp #130                ; TUI_INP
+    cmp #tui_type::TUI_INP  ; TUI_INP
     beq @tui_inp
     ldy tui_widget+3        ; get widget len        
     dey
@@ -537,5 +563,39 @@ TUI_BOX_V  := '|'
     sta (tui_ptr),y         ;Left edge
     dex
     bne @looph
+    rts
+.endproc
+
+.proc _tui_draw_widget
+    sta tui_tmp3
+    jsr tui_idx_to_addr
+    ldy #0
+    lda (tui_ptr),y
+    beq @L4
+    sta tui_tmp2
+    lda #TUI_DRAW_CLR
+    bit tui_tmp2
+    beq @L1
+    lda tui_tmp3
+    jsr _tui_clear_txt
+@L1:
+    lda #TUI_DRAW_TXT
+    bit tui_tmp2
+    beq @L2
+    lda tui_tmp3
+    jsr _tui_draw_txt
+@L2:
+    lda #TUI_DRAW_INV
+    bit tui_tmp2
+    beq @L3
+    lda tui_tmp3
+    jsr _tui_toggle_highlight
+@L3:
+    lda #TUI_DRAW_BOX
+    bit tui_tmp2
+    beq @L4
+    lda tui_tmp3
+    jsr _tui_draw_box
+@L4:
     rts
 .endproc

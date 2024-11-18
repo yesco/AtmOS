@@ -23,19 +23,26 @@ unsigned int tui_screen_xy(uint8_t x, uint8_t y);
 #define TUI_PUTC_CONST(x,y,ch) (*(TUI_SCREEN_XY_CONST(x,y)) = (ch))
 //First active widget
 #define TUI_ACTIVE 128
+#define TUI_DRAW_CTRL 0x01
+#define TUI_DRAW_TXT 0x02
+#define TUI_DRAW_BOX 0x04
+#define TUI_DRAW_INV 0x08
+#define TUI_DRAW_CLR 0x10
+#define TUI_DRAW_NOP 0x20
+#define TUI_DRAW_ACT 0x80
 
 enum tui_type {
     //Passive widgets and tokens
-    TUI_END = 0,
-    TUI_START,
-    TUI_BOX,
-    TUI_TXT,
-    TUI_INV,
-    TUI_NOP,
+    TUI_END   = 0,
+    TUI_START = TUI_DRAW_CTRL,
+    TUI_BOX   = TUI_DRAW_BOX,
+    TUI_TXT   = TUI_DRAW_TXT,
+    TUI_INV   = TUI_DRAW_TXT | TUI_DRAW_INV,
+    TUI_NOP   = TUI_DRAW_NOP,
     //Active widgets
-    TUI_SEL = TUI_ACTIVE,       //TXT but selectable
-    TUI_BTN,                    //SEL but reversed paper/ink
-    TUI_INP,                    //INPut field
+    TUI_SEL   = TUI_DRAW_ACT | TUI_DRAW_TXT,                //TXT but selectable
+    TUI_BTN   = TUI_DRAW_ACT | TUI_DRAW_TXT | TUI_DRAW_INV, //SEL but reversed paper/ink
+    TUI_INP   = TUI_DRAW_ACT | TUI_DRAW_TXT | TUI_DRAW_CLR  //INPut field
 };
 
 struct _tui_widget {
