@@ -28,9 +28,11 @@ const char txt_tape[] = "Cassette";
 const char txt_tap[] = "tap:";
 const char txt_byte[] = "\024Auto \x10";
 const char txt_bit[] = "\024Bits \x10";
-const char txt_rom[] = "Oric ROM";
+const char txt_orom[] = "Oric ROM";
+const char txt_rom[] = "rom:";
 const char txt_basic11[] = "\024Atmos \x10";
 const char txt_basic10[] = "\024Oric-1\x10";
+const char txt_custom[] = "\021Custom\x10";
 const char txt_mouse[] = "Mouse";
 const char txt_x[] = "[x]";
 const char txt_on[] = "\x14on  \x10";
@@ -112,8 +114,9 @@ tui_widget ui[] = {
     { TUI_TXT,   1, 8,10, txt_tape },{ TUI_SEL, 12, 8, 6, txt_off },
     { TUI_SEL,  19, 8, 7, txt_byte },
     { TUI_TXT,   3, 9, 4, txt_tap }, { TUI_SEL,   8, 9,18, loci_cfg.drv_names[4] },
-    { TUI_TXT,   1,11, 8, txt_rom }, { TUI_SEL,  12,11, 8, txt_basic11 },
-    { TUI_TXT,   1,13,10, txt_mouse }, { TUI_SEL, 12,13, 6, txt_off },
+    { TUI_TXT,   1,11, 8, txt_orom }, { TUI_SEL,  12,11, 8, txt_basic11 },
+    { TUI_TXT,   3,12, 4, txt_rom },  { TUI_SEL,   8,12,26, loci_cfg.drv_names[5] },
+    { TUI_TXT,   1,15,10, txt_mouse }, { TUI_SEL, 12,15, 6, txt_off },
     { TUI_TXT,   1,19,10, txt_map },
     { TUI_SEL,  30, 19, 1, txt_neg},
     { TUI_TXT,  29, 19, 1, txt_alt},
@@ -135,6 +138,8 @@ tui_widget ui[] = {
     { TUI_SEL,  36,  4, 1, txt_eject},
     { TUI_SEL,  36,  5, 1, txt_eject},
     { TUI_SEL,  36,  6, 1, txt_eject},
+    { TUI_TXT,  35, 12, 1, txt_alt},
+    { TUI_TXT,  36, 12, 1, txt_eject},
     { TUI_NOP,  38,  3, 1, txt_unlocked},
     { TUI_NOP,  38,  4, 1, txt_locked},
     { TUI_NOP,  38,  5, 1, txt_locked},
@@ -161,20 +166,22 @@ tui_widget ui[] = {
 #define IDX_TAP_BIT 14
 #define IDX_TAP 16
 #define IDX_ROM 18
-#define IDX_MOU_ON 20
-#define IDX_MAP_REW 22
-#define IDX_MAP_RV1 24
-#define IDX_MAP_FFW 26
-#define IDX_TAP_REW 29
-#define IDX_TAP_CNT 30
-#define IDX_EJECT_TAP 31
-#define IDX_EJECT_DF0 36
-#define IDX_EJECT_DF1 37
-#define IDX_EJECT_DF2 38
-#define IDX_EJECT_DF3 39
-#define IDX_RETURN 46
-#define IDX_BOOT 47
-#define IDX_TIOR 49
+#define IDX_ROM_FILE 20
+#define IDX_MOU_ON 22
+#define IDX_MAP_REW 24
+#define IDX_MAP_RV1 26
+#define IDX_MAP_FFW 28
+#define IDX_TAP_REW 31
+#define IDX_TAP_CNT 32
+#define IDX_EJECT_TAP 33
+#define IDX_EJECT_DF0 38
+#define IDX_EJECT_DF1 39
+#define IDX_EJECT_DF2 40
+#define IDX_EJECT_DF3 41
+#define IDX_EJECT_ROM 43
+#define IDX_RETURN 50
+#define IDX_BOOT 51
+#define IDX_TIOR 53
 
 const uint8_t tui_eject_idx[] = { 
     IDX_EJECT_DF0, 
@@ -182,6 +189,7 @@ const uint8_t tui_eject_idx[] = {
     IDX_EJECT_DF2,
     IDX_EJECT_DF3,
     IDX_EJECT_TAP,
+    IDX_EJECT_ROM,
 };
 
 #define POPUP_FILE_START 8
@@ -379,9 +387,9 @@ int8_t calling_widget = -1;
 void boot(bool do_return){
     char* boot_text;
     if(do_return && return_possible)
-        boot_text = &txt_returning;
+        boot_text = (char*)&txt_returning;
     else
-        boot_text = &txt_booting;
+        boot_text = (char*)&txt_booting;
     tui_cls(3);
     strcpy(TUI_SCREEN_XY_CONST(17,14),boot_text);
     loci_cfg.tui_pos = tui_get_current();
@@ -411,22 +419,30 @@ void update_onoff_btn(uint8_t idx, uint8_t on){
     tui_draw_widget(idx);
 }
 
-void update_mode_btn(uint8_t idx, uint8_t on){
-    if(on){
-        tui_set_data(idx,txt_bit);
+void update_mode_btn(){
+    if(loci_cfg.bit_on){
+        tui_set_data(IDX_TAP_BIT,txt_bit);
     }else{
-        tui_set_data(idx,txt_byte);
+        tui_set_data(IDX_TAP_BIT,txt_byte);
     }
-    tui_draw_widget(idx);
+    tui_draw_widget(IDX_TAP_BIT);
 }
 
-void update_rom_btn(uint8_t idx, uint8_t on){
-    if(on){
-        tui_set_data(idx,txt_basic11);
+void update_rom_btn(){
+    if(loci_cfg.mounts & (1u << 5)){
+        tui_set_data(IDX_ROM,txt_custom);
+        tui_set_type(IDX_ROM,TUI_TXT);
+        tui_draw_widget(IDX_ROM);
     }else{
-        tui_set_data(idx,txt_basic10);
+        if(loci_cfg.b11_on){
+            tui_set_data(IDX_ROM,txt_basic11);
+        }else{
+            tui_set_data(IDX_ROM,txt_basic10);
+        }
+        tui_set_type(IDX_ROM,TUI_BTN);
+        tui_draw_widget(IDX_ROM);
+        tui_toggle_highlight(IDX_ROM);
     }
-    tui_draw_widget(idx);
 }
 
 void update_eject_btn(uint8_t drv){
@@ -502,6 +518,11 @@ void DisplayKey(unsigned char key)
                             sprintf(txt_cnt,"%7lu",tap_tell());
                             tui_draw_widget(IDX_TAP_CNT);
                             tui_toggle_highlight(IDX_TAP);
+                            break;
+                        case(IDX_ROM_FILE):
+                            do_eject(5,IDX_ROM_FILE);
+                            tui_toggle_highlight(IDX_ROM_FILE);
+                            update_rom_btn();
                             break;
                     }
                 }else{
@@ -620,12 +641,12 @@ void DisplayKey(unsigned char key)
                         break;
                     case(IDX_TAP_BIT):
                         loci_cfg.bit_on ^= 0x01;
-                        update_mode_btn(IDX_TAP_BIT,loci_cfg.bit_on);
+                        update_mode_btn();
                         tui_toggle_highlight(IDX_TAP_BIT);
                         break;
                     case(IDX_ROM):
                         loci_cfg.b11_on ^= 0x01;
-                        update_rom_btn(IDX_ROM,loci_cfg.b11_on);
+                        update_rom_btn();
                         tui_toggle_highlight(IDX_ROM);
                         break;
                     case(IDX_DF0):
@@ -633,12 +654,15 @@ void DisplayKey(unsigned char key)
                     case(IDX_DF2):
                     case(IDX_DF3):
                     case(IDX_TAP):
+                    case(IDX_ROM_FILE):
                         calling_widget = tui_get_current();
                         tui_toggle_highlight(calling_widget);
                         if(calling_widget <= IDX_DF3)
                             strcpy(filter,".dsk");
-                        else
+                        else if(calling_widget == IDX_TAP)
                             strcpy(filter,".tap");
+                        else
+                            strcpy(filter,".rom");
                         dir_ok = dir_fill(loci_cfg.path);
                         parse_files_to_widget();
                         popup[IDX_PATH].data = (char*)&loci_cfg.path;
@@ -706,6 +730,10 @@ void DisplayKey(unsigned char key)
                         sprintf(txt_cnt,"%7lu",tap_tell());
                         tui_draw_widget(IDX_TAP_CNT);
                         tui_set_current(IDX_TAP);
+                        break;
+                    case(IDX_EJECT_ROM):
+                        do_eject(5,IDX_ROM_FILE);
+                        tui_set_current(IDX_ROM_FILE);
                         break;
                     case(IDX_TAP_REW):
                         TAP.cmd = TAP_CMD_REW;
@@ -792,11 +820,13 @@ void DisplayKey(unsigned char key)
                             case(IDX_TAP):
                                 drive = 4;
                                 break;
-                            case(IDX_TAP_CNT):
-                                drive = 5;      //Pseudo drive
+                            case(IDX_ROM_FILE):
+                                drive = 5;
                                 break;
+                            case(IDX_TAP_CNT):
+                                drive = 6;      //Pseudo drive
                         }
-                        if(drive<5)
+                        if(drive<6)
                             if(mount(drive,loci_cfg.path,tmp_ptr)==0x00){
                                 loci_cfg.mounts |= 1u << drive;
                             }else{
@@ -807,8 +837,9 @@ void DisplayKey(unsigned char key)
 
                         tui_clear_box(1);
                         tui_draw(ui);
-                        if(drive<5){
+                        if(drive<6){
                             update_eject_btn(drive);
+                            update_rom_btn();
                             tui_clear_txt(calling_widget);
                             strncpy(loci_cfg.drv_names[drive],tmp_ptr,32);
                             tui_set_data(calling_widget,loci_cfg.drv_names[drive]);
@@ -1078,8 +1109,8 @@ void main(void){
     update_onoff_btn(IDX_FDC_ON,loci_cfg.fdc_on);
     update_onoff_btn(IDX_TAP_ON,loci_cfg.tap_on);
     update_onoff_btn(IDX_MOU_ON,loci_cfg.mou_on);
-    update_mode_btn(IDX_TAP_BIT,loci_cfg.bit_on);
-    update_rom_btn(IDX_ROM,loci_cfg.b11_on);
+    update_mode_btn();
+    update_rom_btn();
     if(return_possible){
         tui_set_type(IDX_RETURN, TUI_SEL);
         tui_draw_widget(IDX_RETURN);
@@ -1096,7 +1127,7 @@ void main(void){
         TUI_PUTC_CONST(36,0,'0');
     }
 
-    for(i=0; i<=4; i++)
+    for(i=0; i<=5; i++)
         update_eject_btn(i);
     tui_set_current(loci_cfg.tui_pos);
     dir_needs_refresh = 1;
