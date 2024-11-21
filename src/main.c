@@ -851,7 +851,8 @@ void DisplayKey(unsigned char key)
                             loci_cfg.fdc_on = 0x01;
                             tui_set_data(IDX_FDC_ON,txt_on);
                             tui_draw_widget(IDX_FDC_ON);
-                        }else{
+                        }
+                        if(drive == 4){
                             loci_cfg.tap_on = 0x01;
                             tui_set_data(IDX_TAP_ON,txt_on);
                             tui_draw_widget(IDX_TAP_ON);
