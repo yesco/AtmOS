@@ -60,7 +60,7 @@ VMODE_ADDR := (RAM_SIZE+VRAM_SIZE)
 
 
 .proc mia_save_state
-    cld
+    ;cld
 .endproc
 ;fall-through
 .proc mia_save_registers
