@@ -459,6 +459,11 @@ void update_eject_btn(uint8_t drv){
     }
 }
 
+void update_tap_counter(void){
+    sprintf(txt_cnt,"%7lu",tap_tell());
+    tui_draw_widget(IDX_TAP_CNT);
+}
+
 void do_eject(uint8_t drv, uint8_t ui_idx){
     umount(drv);
     loci_cfg.drv_names[drv][0] = '\0';
@@ -515,8 +520,7 @@ void DisplayKey(unsigned char key)
                             break;
                         case(IDX_TAP):
                             do_eject(4,IDX_TAP);
-                            sprintf(txt_cnt,"%7lu",tap_tell());
-                            tui_draw_widget(IDX_TAP_CNT);
+                            update_tap_counter();
                             tui_toggle_highlight(IDX_TAP);
                             break;
                         case(IDX_ROM_FILE):
@@ -727,8 +731,7 @@ void DisplayKey(unsigned char key)
                         break;
                     case(IDX_EJECT_TAP):
                         do_eject(4,IDX_TAP);
-                        sprintf(txt_cnt,"%7lu",tap_tell());
-                        tui_draw_widget(IDX_TAP_CNT);
+                        update_tap_counter();
                         tui_set_current(IDX_TAP);
                         break;
                     case(IDX_EJECT_ROM):
@@ -737,8 +740,7 @@ void DisplayKey(unsigned char key)
                         break;
                     case(IDX_TAP_REW):
                         TAP.cmd = TAP_CMD_REW;
-                        sprintf(txt_cnt,"%7lu",tap_tell());
-                        tui_draw_widget(IDX_TAP_CNT);
+                        update_tap_counter();
                         break;
                 }
             }else{
@@ -856,8 +858,7 @@ void DisplayKey(unsigned char key)
                             loci_cfg.tap_on = 0x01;
                             tui_set_data(IDX_TAP_ON,txt_on);
                             tui_draw_widget(IDX_TAP_ON);
-                            sprintf(txt_cnt,"%7lu",tap_tell());
-                            tui_draw_widget(IDX_TAP_CNT);
+                            update_tap_counter();
                         }
                 }
             }
@@ -1105,13 +1106,13 @@ void main(void){
     sprintf(&txt_tiow[5],"%02d",loci_tiow);
     sprintf(&txt_tiod[5],"%02d",loci_tiod);
     sprintf(&txt_tadr[5],"%02d",loci_tadr);
-    sprintf(txt_cnt, "%7lu", tap_tell());
     tui_draw(ui);
     update_onoff_btn(IDX_FDC_ON,loci_cfg.fdc_on);
     update_onoff_btn(IDX_TAP_ON,loci_cfg.tap_on);
     update_onoff_btn(IDX_MOU_ON,loci_cfg.mou_on);
     update_mode_btn();
     update_rom_btn();
+    update_tap_counter();
     if(return_possible){
         tui_set_type(IDX_RETURN, TUI_SEL);
         tui_draw_widget(IDX_RETURN);
