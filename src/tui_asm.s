@@ -2,7 +2,8 @@
 ; tui_asm.s
 ; ---------------------------------------------------------------------------
 
-.export _tui_org_list, _tui_current
+.exportzp _tui_org_list
+.export _tui_current
 .export _tui_screen_xy, _tui_cls, _tui_fill, _tui_hit, _tui_toggle_highlight
 .export _tui_clear_txt, _tui_set_current, _tui_get_current, _tui_draw_txt
 .export _tui_next_active, _tui_prev_active, _tui_clear_box, _tui_draw_box
