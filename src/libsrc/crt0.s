@@ -47,6 +47,10 @@ _init:
     lda #%01000000
     sta VIA_ACR
 
+    ; Setup PCR
+    lda #%11011101 ; CB2=low, CA2=low
+    sta VIA_PCR
+
     ; Enable only Timer 1 interrupts
     lda #%00111111
     sta VIA_IER
