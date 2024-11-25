@@ -153,7 +153,7 @@ tui_row_offset:
     sbc (_tui_org_list),y     ;y-org_y
     sta tui_y
     jsr popa
-    dey
+    ldy #1
     sec
     sbc (_tui_org_list),y     ;x-org_x
     sta tui_x
