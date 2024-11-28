@@ -737,6 +737,7 @@ void DisplayKey(unsigned char key)
                     case(IDX_EJECT_ROM):
                         do_eject(5,IDX_ROM_FILE);
                         tui_set_current(IDX_ROM_FILE);
+                        update_rom_btn();
                         break;
                     case(IDX_TAP_REW):
                         TAP.cmd = TAP_CMD_REW;
