@@ -51,6 +51,13 @@ _init:
     lda #%11011101 ; CB2=low, CA2=low
     sta VIA_PCR
 
+    ; Setup PA, PB default output
+    lda #%11111111
+    sta VIA_PA2
+
+    lda #%10110000  ; Tape out=high, motor=low, uc=high, Strobe=high, kbdrow=0
+    sta VIA_PB
+
     ; Enable only Timer 1 interrupts
     lda #%00111111
     sta VIA_IER
