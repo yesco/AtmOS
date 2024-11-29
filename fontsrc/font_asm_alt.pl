@@ -9,7 +9,7 @@ for(my $i=32; $i<=95; $i++){
     printf(";<%c>\n", $i);
     my $arr_ref = ${$hash_ref}{$i};
     my @reversed = map(unpack('C', pack('B8',unpack('b8',pack('C',$_)))),@{$arr_ref}[5 .. 12]);
-    my @glyph = map(sprintf("\$%02X",$_), @reversed);
+    my @glyph = map(sprintf("\$%02X",$_ | 0x40), @reversed);
     print ".byte ";
 #    foreach my $line (@glyph){
 #        printf "\$%02X, ", $line>>2;
