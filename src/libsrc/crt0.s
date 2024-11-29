@@ -32,8 +32,8 @@ _init:
 ; Initialize memory storage
     jsr zerobss   ; Clear BSS segment
     jsr copydata  ; Initialize DATA segment
-    jsr copyfont
-    jsr copyaltfont
+    ;jsr copyfont
+    ;jsr copyaltfont
     ;jsr copyscrn
     jsr initlib   ; Run constructors
 

@@ -1,4 +1,5 @@
 .export _init_display
+.import copyfont, copyaltfont
 
 .include "loci.inc"
 
@@ -6,10 +7,19 @@
 
 .proc _init_display
 
-    pha
-    lda $1a
+    lda $bfdf
+    ldx #$1a
+    stx $bfdf
+    ldx #$00
+    ldy #$10
+@delay:
+    dex 
+    bne @delay
+    dey
+    bne @delay
     sta $bfdf
-    pla
+    jsr copyfont
+    jsr copyaltfont
     rts
 
 .endproc

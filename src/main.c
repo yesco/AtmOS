@@ -1067,9 +1067,10 @@ uint8_t auto_tune_tior(void){
 
 void main(void){
     uint8_t i;
+
+    tui_cls(3);
     init_display();
-    i = irq_ticks+2;        //Wait 1+ tick for screen mode to stick
-    while(irq_ticks < i){}
+    
     #ifdef VERSION
     sprintf(txt_title,"LOCI ROM %d.%d.%d FW %d.%d.%d",
         locirom_version[2],locirom_version[1],locirom_version[0],
@@ -1081,8 +1082,6 @@ void main(void){
 
     return_possible = mia_restore_buffer_ok();
 
-    tui_cls(3);
- 
     if(!persist_get_loci_cfg(&loci_cfg)){
         loci_cfg.fdc_on = 0x00;
         loci_cfg.tap_on = 0x00;
