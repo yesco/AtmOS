@@ -77,6 +77,8 @@ struct __LOCI_TAP
 #define TAP_CMD_PLAY 0x01
 #define TAP_CMD_REC  0x02
 #define TAP_CMD_REW  0x03
+#define TAP_CMD_BIT  0x04
+#define TAP_CMD_FFW  0x05
 
 typedef struct __TAP_HEADER
 {

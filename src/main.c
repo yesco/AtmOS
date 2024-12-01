@@ -129,6 +129,7 @@ tui_widget ui[] = {
     { TUI_TXT,  26,  9, 1, txt_alt},
     { TUI_SEL,  27,  9, 1, txt_rew},
     { TUI_SEL,  28,  9, 7, txt_cnt},
+    { TUI_SEL,  35,  9, 1, txt_ffw},
     { TUI_SEL,  36,  9, 1, txt_eject},
     { TUI_TXT,  35,  3, 1, txt_alt},
     { TUI_TXT,  35,  4, 1, txt_alt},
@@ -173,15 +174,16 @@ tui_widget ui[] = {
 #define IDX_MAP_FFW 28
 #define IDX_TAP_REW 31
 #define IDX_TAP_CNT 32
-#define IDX_EJECT_TAP 33
-#define IDX_EJECT_DF0 38
-#define IDX_EJECT_DF1 39
-#define IDX_EJECT_DF2 40
-#define IDX_EJECT_DF3 41
-#define IDX_EJECT_ROM 43
-#define IDX_RETURN 50
-#define IDX_BOOT 51
-#define IDX_TIOR 53
+#define IDX_TAP_FFW 33
+#define IDX_EJECT_TAP 34
+#define IDX_EJECT_DF0 39
+#define IDX_EJECT_DF1 40
+#define IDX_EJECT_DF2 41
+#define IDX_EJECT_DF3 42
+#define IDX_EJECT_ROM 44
+#define IDX_RETURN 51
+#define IDX_BOOT 52
+#define IDX_TIOR 54
 
 const uint8_t tui_eject_idx[] = { 
     IDX_EJECT_DF0, 
@@ -743,6 +745,10 @@ void DisplayKey(unsigned char key)
                         TAP.cmd = TAP_CMD_REW;
                         update_tap_counter();
                         break;
+                    case(IDX_TAP_FFW):
+                        TAP.cmd = TAP_CMD_FFW;
+                        update_tap_counter();
+                        break;
                 }
             }else{
                 switch(tui_get_current()){
@@ -859,6 +865,9 @@ void DisplayKey(unsigned char key)
                             loci_cfg.tap_on = 0x01;
                             tui_set_data(IDX_TAP_ON,txt_on);
                             tui_draw_widget(IDX_TAP_ON);
+                            update_tap_counter();
+                        }
+                        if(drive == 6){
                             update_tap_counter();
                         }
                 }
