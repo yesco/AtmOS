@@ -54,7 +54,7 @@ struct dirent {
     int d_fd;
     char d_name[64];
     unsigned char d_attrib;
-    unsigned int d_size;
+    unsigned long d_size;
 };
 
 #define _DE_ISREG(t)    ((t) & DIR_ATTR_DIR == 0)
