@@ -54,6 +54,7 @@ struct dirent {
     int d_fd;
     char d_name[64];
     unsigned char d_attrib;
+    unsigned char reserved;
     unsigned long d_size;
 };
 
