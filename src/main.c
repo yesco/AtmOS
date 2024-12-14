@@ -395,7 +395,9 @@ int8_t calling_widget = -1;
 
 void boot(bool do_return){
     char* boot_text;
-    if(do_return && return_possible)
+    if(do_return && !return_possible)
+        return;
+    if(do_return)
         boot_text = (char*)&txt_returning;
     else
         boot_text = (char*)&txt_booting;
