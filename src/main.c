@@ -57,6 +57,7 @@ const char txt_timing[] = "Timing";
 const char txt_filter[] = "[      ]";
 const char txt_booting[] = "Booting";
 const char txt_returning[] = "Returning";
+const char txt_help[] = "\006ESC\003= boot\006RETURN\003= return";
 char txt_rv1[] = "--";
 char txt_tior[] = "tior --";
 char txt_tiow[] = "tiow --";
@@ -161,6 +162,7 @@ tui_widget ui[] = {
     { TUI_TXT,  30, 21, 8, txt_tiow},
     { TUI_TXT,  30, 22, 8, txt_tiod},
     { TUI_TXT,  30, 23, 8, txt_tadr},
+    { TUI_TXT,   1, 26,32, txt_help},
 
     { TUI_END,   0, 0, 0, 0 }
 };
