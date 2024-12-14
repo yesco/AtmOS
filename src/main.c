@@ -96,6 +96,7 @@ int dir_cmp(const void *lhsp,const void *rhsp);
 uint8_t dir_fill(char* dname);
 uint8_t tap_fill(void);
 void parse_files_to_widget(void);
+uint8_t update_dir_ui(void);
 void boot(bool do_return);
 void update_onoff_btn(uint8_t idx, uint8_t on);
 void update_mode_btn(void);
@@ -391,6 +392,20 @@ void parse_files_to_widget(void){
         popup[IDX_RPAGE].type = TUI_SEL;
     }
     
+}
+
+uint8_t update_dir_ui(void){
+    uint8_t dir_ok;
+    dir_needs_refresh = true;
+    dir_ok = dir_fill(loci_cfg.path);
+    parse_files_to_widget();    
+    tui_draw(popup);
+    if(dir_entries)
+        tui_set_current(POPUP_FILE_START);
+    if(!dir_ok){
+        tui_draw(warning);
+    }
+    return dir_ok;
 }
 
 int8_t calling_widget = -1;
@@ -694,16 +709,8 @@ void DisplayKey(unsigned char key)
                             strcpy(filter,".tap");
                         else
                             strcpy(filter,".rom");
-                        dir_ok = dir_fill(loci_cfg.path);
-                        parse_files_to_widget();
                         popup[IDX_PATH].data = (char*)&loci_cfg.path;
-                        tui_draw(popup);
-                        if(dir_entries)
-                            tui_set_current(POPUP_FILE_START);
-
-                        if(!dir_ok){
-                            tui_draw(warning);
-                        }
+                        dir_ok = update_dir_ui();
                         break;
                     case(IDX_TAP_CNT):
                         calling_widget = tui_get_current();
@@ -825,15 +832,7 @@ void DisplayKey(unsigned char key)
                             }else{
                                 strncat(loci_cfg.path,tmp_ptr,256-strlen(loci_cfg.path));
                             }
-                            dir_needs_refresh = 1;
-                            dir_ok = dir_fill(loci_cfg.path);
-                            parse_files_to_widget();
-                            tui_draw(popup);
-                            if(dir_entries)
-                                tui_set_current(POPUP_FILE_START);
-                            if(!dir_ok){
-                                tui_draw(warning);
-                            }
+                            dir_ok = update_dir_ui();
                             break;
                         }
                         //File selection
@@ -1015,13 +1014,7 @@ void DisplayKey(unsigned char key)
                                 }else{
                                     loci_cfg.path[0] = 0x00;
                                 }
-                                dir_ok = dir_fill(loci_cfg.path);
-                                parse_files_to_widget();
-                                tui_draw(popup);
-                                tui_set_current(POPUP_FILE_START);
-                                if(!dir_ok){
-                                    tui_draw(warning);
-                                }
+                                dir_ok = update_dir_ui();
                                 break;
                         }
                     }
