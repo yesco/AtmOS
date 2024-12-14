@@ -8,7 +8,7 @@
 .export _tui_clear_txt, _tui_set_current, _tui_get_current, _tui_draw_txt
 .export _tui_next_active, _tui_prev_active, _tui_clear_box, _tui_draw_box
 .export _tui_set_data, _tui_get_data, _tui_set_type, _tui_get_type, _tui_get_len
-.export _tui_draw_widget
+.export _tui_draw_widget, _tui_draw
 .import popa, popax
 
 .define TUI_SCREEN $BB80
@@ -40,9 +40,11 @@
 _tui_org_list: .res 2
 tui_ptr:    .res 2
 tui_ptr2:   .res 2
+tui_ptr3:   .res 2
 tui_tmp:    .res 1
 tui_tmp2:   .res 1
 tui_tmp3:   .res 1
+tui_tmp4:   .res 1
 
 .bss
 _tui_current: .res 1
@@ -598,5 +600,31 @@ TUI_BOX_V  := '|'
     lda tui_tmp3
     jsr _tui_draw_box
 @L4:
+    rts
+.endproc
+
+.proc _tui_draw
+    sta _tui_org_list+0
+    stx _tui_org_list+1
+    ldx #0
+    stx _tui_current
+    inx
+    stx tui_tmp4
+@loop:
+    lda tui_tmp4
+    jsr tui_idx_to_addr
+    ldy #0
+    lda (tui_ptr),y
+    beq @end             ;Type TUI_END
+    cmp #tui_type::TUI_START
+    beq _tui_draw
+    cmp #tui_type::TUI_NOP
+    beq @next
+    lda tui_tmp4
+    jsr _tui_draw_widget
+@next:
+    inc tui_tmp4
+    bne @loop           ;branch always
+@end:
     rts
 .endproc
