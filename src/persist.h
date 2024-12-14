@@ -7,6 +7,7 @@ typedef struct _loci_cfg {
     uint8_t mou_on;
     uint8_t b11_on;
     uint8_t ser_on;
+    uint8_t ald_on;
     uint8_t mounts; //0-3 fdc, 4 tap, 5 rom
     uint8_t tui_pos;
     char path[256];
