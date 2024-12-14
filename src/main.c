@@ -1007,6 +1007,20 @@ void DisplayKey(unsigned char key)
                                     loci_cfg.path[len] = '\0';
                                 }
                                 break;
+                            case('?'):  //Unshifted '/'
+                                if((ret = strrchr(loci_cfg.path,'/')) != NULL){
+                                    ret[0] = 0x00;
+                                }else{
+                                    loci_cfg.path[0] = 0x00;
+                                }
+                                dir_ok = dir_fill(loci_cfg.path);
+                                parse_files_to_widget();
+                                tui_draw(popup);
+                                tui_set_current(POPUP_FILE_START);
+                                if(!dir_ok){
+                                    tui_draw(warning);
+                                }
+                                break;
                         }
                     }
                 }
