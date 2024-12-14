@@ -97,10 +97,15 @@ uint8_t tap_fill(void);
 void parse_files_to_widget(void);
 void boot(bool do_return);
 void update_onoff_btn(uint8_t idx, uint8_t on);
+void update_mode_btn(void);
+void update_rom_btn(void);
 void update_eject_btn(uint8_t drv);
+void update_load_btn(void);
+void update_tap_counter(void);
 void do_eject(uint8_t drv, uint8_t ui_idx);
 void DisplayKey(unsigned char key);
 unsigned char Mouse(unsigned char key);
+uint8_t auto_tune_tior(void);
 void main(void);
 
 tui_widget ui[] = {
