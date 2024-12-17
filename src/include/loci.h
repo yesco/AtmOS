@@ -154,6 +154,8 @@ long __fastcall__ mia_call_long_errno (unsigned char op);
 #define MIA_OP_TAP_TELL 0x93
 #define MIA_OP_TAP_HDR 0x94
 
+#define MIA_OP_UNAME 0x98
+
 #define MIA_OP_BOOT 0xA0
 #define MIA_OP_TUNE_TMAP 0xA1
 #define MIA_OP_TUNE_TIOR 0xA2
