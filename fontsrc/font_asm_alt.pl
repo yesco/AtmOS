@@ -8,8 +8,16 @@ printf ("; Font %s by %s\n", ${$hash_ref}{'name'},${$hash_ref}{'copy'});
 for(my $i=32; $i<=95; $i++){
     printf(";<%c>\n", $i);
     my $arr_ref = ${$hash_ref}{$i};
-    my @reversed = map(unpack('C', pack('B8',unpack('b8',pack('C',$_)))),@{$arr_ref}[5 .. 12]);
-    my @glyph = map(sprintf("\$%02X",$_ | 0x40), @reversed);
+    my @r = map(unpack('C', pack('B8',unpack('b8',pack('C',$_)))),@{$arr_ref}[5 .. 12]);
+    my @p;
+    $p[0] = $r[0]<<18 | $r[1]<<12 | $r[2]<<6 | $r[3];  
+    $p[1] = $r[4]<<18 | $r[5]<<12 | $r[6]<<6 | $r[7];
+    my @s;
+    for(my $j=0; $j<=2; $j++){
+        $s[$j+0] = ($p[0] >> (16-($j*8))) & 0xFF;
+        $s[$j+3] = ($p[1] >> (16-($j*8))) & 0xFF;
+    }  
+    my @glyph = map(sprintf("\$%02X",$_), @s);
     print ".byte ";
 #    foreach my $line (@glyph){
 #        printf "\$%02X, ", $line>>2;
