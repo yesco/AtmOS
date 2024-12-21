@@ -148,6 +148,8 @@ long __fastcall__ mia_call_long_errno (unsigned char op);
 #define MIA_OP_CLOSEDIR 0x81
 #define MIA_OP_READDIR 0x82
 
+#define MIA_OP_GETCWD 0x88
+
 #define MIA_OP_MOUNT 0x90
 #define MIA_OP_UMOUNT 0x91
 #define MIA_OP_TAP_SEEK 0x92
@@ -175,6 +177,8 @@ int __fastcall__ read_xstack (void* buf, unsigned count, int fildes);
 int __fastcall__ read_xram (unsigned buf, unsigned count, int fildes);
 int __fastcall__ write_xstack (const void* buf, unsigned count, int fildes);
 int __fastcall__ write_xram (unsigned buf, unsigned count, int fildes);
+
+int __fastcall__ getcwd_xram(unsigned buf, unsigned len);
 
 int __fastcall__ mount (int drive, register const char* path,register const char* filename);
 int __fastcall__ umount (int drive);
