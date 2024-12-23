@@ -117,7 +117,7 @@ _KeyAsciiLower:
     lda #$dd 
     sta VIA_PCR 
 
-    lda #$40+$1f ;Enable port output on 8912 + turn off audio channels
+    lda #$40+$3f ;Enable port output on 8912 + turn off noise and tone generators
 
     sta VIA_PA2 
     lda #$fd 
