@@ -1,4 +1,4 @@
-.export _init_display
+.export _init_display, __txtscreen
 .import copyfont, copyaltfont
 
 .include "loci.inc"

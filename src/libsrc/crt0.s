@@ -10,7 +10,7 @@
 .export __STARTUP__ : absolute = 1
 .import __RAM_START__, __RAM_SIZE__
 
-.import copydata, copyfont, copyaltfont, copyscrn, zerobss, initlib, donelib
+.import copydata, copyfont, copyaltfont, copyscrn, zerobss, initlib, donelib, check_romtag
 
 .include "loci.inc"
 .include "zeropage.inc"
@@ -29,9 +29,12 @@ _init:
     lda #>(__RAM_START__ + __RAM_SIZE__)
     sta sp+1
 
+    jsr check_romtag
+
 ; Initialize memory storage
     jsr zerobss   ; Clear BSS segment
     jsr copydata  ; Initialize DATA segment
+    ;font and screen initialisation moved to application (e.g. display.s)
     ;jsr copyfont
     ;jsr copyaltfont
     ;jsr copyscrn
