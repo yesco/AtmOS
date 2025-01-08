@@ -147,6 +147,7 @@ long __fastcall__ mia_call_long_errno (unsigned char op);
 #define MIA_OP_OPENDIR 0x80
 #define MIA_OP_CLOSEDIR 0x81
 #define MIA_OP_READDIR 0x82
+#define MIA_OP_MKDIR 0x83
 
 #define MIA_OP_GETCWD 0x88
 
