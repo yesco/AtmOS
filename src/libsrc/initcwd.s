@@ -7,7 +7,7 @@
     .include    "loci.inc"
 
     .export         initcwd
-    .import         __cwd, _mia_set_ax, _mia_call_int_errno
+    .import         __cwd, __cwd_buf_size, _mia_set_ax, _mia_call_int_errno
     .importzp       ptr2
 
 initcwd:
@@ -15,7 +15,9 @@ initcwd:
     ldx     #>__cwd
     sta     ptr2
     stx     ptr2+1
-    lda     #255
+    ldy     __cwd_buf_size         ;buffer size - 1
+    dey
+    tya
     ldx     #0
     jsr     _mia_set_ax
     lda     #MIA_OP_GETCWD
