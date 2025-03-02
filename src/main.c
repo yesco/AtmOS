@@ -49,16 +49,8 @@ uint8_t tap_fill(void);
 void parse_files_to_widget(void);
 uint8_t update_dir_ui(void);
 void boot(bool do_return);
-void update_onoff_btn(uint8_t idx, uint8_t on);
-void update_mode_btn(void);
-void update_rom_btn(void);
-void update_eject_btn(uint8_t drv);
-void update_load_btn(void);
-void update_tap_counter(void);
-//void do_eject(uint8_t drv); // , uint8_t ui_idx);
+
 unsigned char Mouse(unsigned char key);
-uint8_t auto_tune_tior(void);
-void main(void);
 
 // dir_cmp -- compare directory entries
 int dir_cmp(const void *lhsp,const void *rhsp)
@@ -187,7 +179,6 @@ uint8_t tap_fill(void){
 void parse_files_to_widget(void){
     uint8_t i;
     char** dir_idx;
-    //tui_widget* widget;
 
     //Directory page out-of-bounds checks
     if(dir_offset >= dir_entries){
@@ -197,45 +188,28 @@ void parse_files_to_widget(void){
         dir_offset = 0;
     }
     dir_idx = &dir_ptr_list[-(dir_entries-dir_offset)]; //(char**)(dir_ptr_list - dir_entries + offset);
-    //widget = &popup[POPUP_FILE_START]; //(tui_widget*)(popup + POPUP_FILE_START);
-
     for(i=0; (i < DIR_PAGE_SIZE) && ((i+dir_offset) < dir_entries); i++){
-      //widget->type = TUI_SEL;
-      //widget->x = 1;
-      //widget->y = i+1;
       //widget->len = 34;
       //widget->data = dir_idx[i]; //dir_ptr_list[-(dir_entries-offset-i)];
-      //widget = &widget[1];
       printf("\n%s\n", dir_idx[i]); // 34?
     }
-    //widget->type = TUI_END;
 
     dir_lpage[0] = '-';
     dir_rpage[0] = '-';
-    //popup[IDX_LPAGE].type = TUI_TXT;
-    //popup[IDX_RPAGE].type = TUI_TXT;
+
     if(dir_offset > 0){
         dir_lpage[0] = '<';
-        //popup[IDX_LPAGE].type = TUI_SEL;
     }
     if(dir_offset+DIR_PAGE_SIZE < dir_entries){
         dir_rpage[0] = '>';
-        // popup[IDX_RPAGE].type = TUI_SEL;
     }
-    
 }
 
 uint8_t update_dir_ui(void){
     uint8_t dir_ok;
-    dir_needs_refresh = true;
+    //dir_needs_refresh = true;
     dir_ok = dir_fill(loci_cfg.path);
     parse_files_to_widget();    
-    //tui_draw(popup);
-    //if(dir_entries)
-    ///tui_set_current(POPUP_FILE_START);
-    //if(!dir_ok){
-    //tui_draw(warning);
-    //}
     return dir_ok;
 }
 
@@ -243,26 +217,27 @@ int8_t calling_widget = -1;
 
 void boot(bool do_return){
   //char* boot_text;
-    if(do_return && !return_possible)
-        return;
+    if(do_return && !return_possible) return;
     printf("!boot: %s\n", do_return? "returning": "booting");
     //clrscr();
+
     persist_set_loci_cfg(&loci_cfg);
     persist_set_magic();
     mia_set_ax(0x80 | (loci_cfg.ald_on <<4) | (loci_cfg.bit_on <<3) | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
     //mia_set_ax(0x00 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
     VIA.ier = 0x7F;         //Disable VIA interrupts
+
     if(do_return)
         mia_restore_state();
     else{
         mia_clear_restore_buffer();
         mia_call_int_errno(MIA_OP_BOOT);    //Only returns if boot fails
     }
+
     VIA.ier = 0xC0;
+
     //tui_cls(3);
     //clrscr();
-    //tui_draw(ui);
-    //DBG_STATUS("!ROM");
     printf("\n%%DEBUG: !ROM\n");
 }
 
@@ -274,7 +249,6 @@ void do_return() {
 
 
 void do_tap() {
-  calling_widget = tui_get_current();
   //if(calling_widget <= IDX_DF3)
   //strcpy(filter,".dsk");
   //else if(calling_widget == IDX_TAP)
@@ -282,65 +256,40 @@ void do_tap() {
   //else
   //strcpy(filter,".rom");
   //popup[IDX_PATH].data = (char*)&loci_cfg.path;
+
   //dir_ok = update_dir_ui();
 
-// TODO(jsk): do_eject(0,IDX_DF0);
-        //tui_toggle_highlight(IDX_DF0);
-//                            break;
-    //case(IDX_DF1):
-        // TODO(jsk): do_eject(1,IDX_DF1);
-        //tui_toggle_highlight(IDX_DF1);
-        //break;
-    //case(IDX_DF2):
-        // TODO(jsk): do_eject(2,IDX_DF2);
-        //tui_toggle_highlight(IDX_DF2);
-        //break;
-    //case(IDX_DF3):
-        // TODO(jsk): do_eject(3,IDX_DF3);
-        //tui_toggle_highlight(IDX_DF3);
-        //break;
-        //case(IDX_TAP):
-        // TODO: do_eject(4,IDX_TAP);
-        // TODO: update_tap_counter();
-        printf("TODO: update_tap_counter()...\n");
-        //tui_toggle_highlight(IDX_TAP);
-        //break;
-    //case(IDX_ROM_FILE):
-        // TODO:(jsk): do_eject(5,IDX_ROM_FILE);
-        //tui_toggle_highlight(IDX_ROM_FILE);
-        //update_rom_btn();
-        printf("TODO: update_rom_btn()...\n");
-        //break;
-    //}
-        // TODO: depends on stupid state
-        // }else{
-        //if(dir_ok && idx > POPUP_FILE_START && loci_cfg.path[0]=='0'){
-                      //tmp_ptr = (char*)tui_get_data(idx);
+  // TODO: do_eject(4,IDX_TAP);
+  // TODO: update_tap_counter();
+  //case(IDX_ROM_FILE):
+  // TODO:(jsk): do_eject(5,IDX_ROM_FILE);
+  //if(dir_ok && idx > POPUP_FILE_START && loci_cfg.path[0]=='0'){
+    //tmp_ptr = (char*)tui_get_data(idx);
+}
 
-                /*         tmp_ptr[0]='/'; */
-                /*         len = strlen(tmp_ptr); */
-                /*         do{ */
-                /*             mia_push_char(tmp_ptr[--len]); */
-                /*         }while(len); */
-                /*         tmp_ptr[0]=' '; */
-                /*         len = strlen(loci_cfg.path); */
-                /*         do{ */
-                /*             mia_push_char(loci_cfg.path[--len]); */
-                /*         }while(len); */
-                /*         if(mia_call_int_errno(MIA_OP_UNLINK)<0) */
-                /*             sprintf(TUI_SCREEN_XY_CONST(37,1),"%02x",errno); */
-                /*         dir_ok = dir_fill(loci_cfg.path); */
-                /*         parse_files_to_widget(); */
-                /*         //tui_draw(popup); */
-                /*     } */
-                /* }                           */
+/*         tmp_ptr[0]='/'; */
+/*         len = strlen(tmp_ptr); */
+/*         do{ */
+/*             mia_push_char(tmp_ptr[--len]); */
+/*         }while(len); */
+/*         tmp_ptr[0]=' '; */
+/*         len = strlen(loci_cfg.path); */
+/*         do{ */
+/*             mia_push_char(loci_cfg.path[--len]); */
+/*         }while(len); */
+// ERROR
+/*         if(mia_call_int_errno(MIA_OP_UNLINK)<0) */
+/*             sprintf(TUI_SCREEN_XY_CONST(37,1),"%02x",errno); */
+/*         dir_ok = dir_fill(loci_cfg.path); */
+/*         parse_files_to_widget(); */
+/*         //tui_draw(popup); */
+/*     } */
+/* }                           */
 //}
 //break;
 //        case 0x82:
           // space
 //            if(calling_widget == -1){
-                    /*     calling_widget = tui_get_current(); */
-                    /*     tui_toggle_highlight(calling_widget); */
                     /*     if(calling_widget <= IDX_DF3) */
                     /*         strcpy(filter,".dsk"); */
                     /*     else if(calling_widget == IDX_TAP) */
@@ -349,33 +298,13 @@ void do_tap() {
                     /*         strcpy(filter,".rom"); */
                     /*     popup[IDX_PATH].data = (char*)&loci_cfg.path; */
                     /*     dir_ok = update_dir_ui(); */
-                    /*     break; */
                     /* case(IDX_TAP_CNT): */
-                    /*     calling_widget = tui_get_current(); */
                     /*     filter[0] = '\0'; */
                     /*     dir_ok = tap_fill(); */
                     /*     parse_files_to_widget(); */
                     /*     popup[IDX_PATH].data = (char*)&loci_cfg.drv_names[4]; */
-                    /*     tui_draw(popup); */
-                    /*     if(dir_entries) */
-                    /*         tui_set_current(POPUP_FILE_START); */
-                    /*     dir_needs_refresh = true; */
-                //case(IDX_EJECT_DF0):
-                      //do_eject(0,IDX_DF0);
-                //case(IDX_EJECT_DF1):
-                      //do_eject(1,IDX_DF1);
-                // case(IDX_EJECT_DF2):
-                      //do_eject(2,IDX_DF2);
-                      //case(IDX_EJECT_DF3):
-                      //             do_eject(3,IDX_DF3);
-                //case(IDX_EJECT_TAP):
-                      //do_eject(4,IDX_TAP);
-                      //update_tap_counter();
                 //case(IDX_EJECT_ROM):
                       //do_eject(5,IDX_ROM_FILE);
-                      //tui_set_current(IDX_ROM_FILE);
-                      //update_rom_btn();
-                      //break;
                 //case(IDX_TAP_REW):
                       //TAP.cmd = TAP_CMD_REW;
                       //update_tap_counter();
@@ -387,14 +316,9 @@ void do_tap() {
                   //parse_files_to_widget();
 //                  if(dir_entries)
 //                            tui_set_current(POPUP_FILE_START);
-//                        break;
                   //case(IDX_RPAGE):
 //                        dir_offset += DIR_PAGE_SIZE;
                   //parse_files_to_widget();
-                  //tui_draw(popup);
-                  //if(dir_entries)
-                  //tui_set_current(POPUP_FILE_START);
-                  //break;
 //                  case(IDX_FILTER):
 //                        tmp_ptr = (char*)tui_get_data(idx);
 //                        len = strlen(tmp_ptr);
@@ -405,10 +329,14 @@ void do_tap() {
             /*            //Selection from the list */
             /*             tmp_ptr = (char*)tui_get_data(tui_get_current()); */
             /*             if(tmp_ptr[0]=='/' || tmp_ptr[0]=='['){    //Directory or device selection */
+
+// HMMM?
             /*                 if(tmp_ptr[0]=='['){ */
             /*                     loci_cfg.path[0] = tmp_ptr[1]; */
             /*                     loci_cfg.path[1] = tmp_ptr[2]; */
             /*                     loci_cfg.path[2] = 0x00; */
+
+// HMMM?
             /*                 }else if(tmp_ptr[1]=='.'){              //Go back down (/..) */
             /*                     if((ret = strrchr(loci_cfg.path,'/')) != NULL){ */
             /*                         ret[0] = 0x00; */
@@ -421,21 +349,7 @@ void do_tap() {
             /*                 dir_ok = update_dir_ui(); */
             /*                 break; */
             /*             } */
-            /*             //File selection */
-            /*             tmp_ptr = tmp_ptr + 1;      //adjust for leading space */
-            /*             switch(calling_widget){ */
-            /*                 case(IDX_DF0): */
-            /*                     drive = 0; */
-            /*                     break; */
-            /*                 case(IDX_DF1): */
-            /*                     drive = 1; */
-            /*                     break; */
-            /*                 case(IDX_DF2): */
-            /*                     drive = 2; */
-            /*                     break; */
-            /*                 case(IDX_DF3): */
-            /*                     drive = 3; */
-            /*                     break; */
+
             /*                 case(IDX_TAP): */
             /*                     drive = 4; */
             /*                     break; */
@@ -454,36 +368,18 @@ void do_tap() {
             /*             else */
             /*                 tap_seek(*((long*)(tmp_ptr-4-1)));  //Seek to start of header */
 
-            /*             tui_clear_box(1); */
-            /*             tui_draw(ui); */
             /*             if(drive<6){ */
-            /*                 update_eject_btn(drive); */
-            /*                 update_rom_btn(); */
-            /*                 tui_clear_txt(calling_widget); */
             /*                 strncpy(loci_cfg.drv_names[drive],tmp_ptr,32); */
             /*                 tui_set_data(calling_widget,loci_cfg.drv_names[drive]); */
-            /*                 tui_draw_widget(calling_widget); */
-            /*                 tui_set_current(calling_widget); */
-            /*             } */
-            /*             calling_widget = -1; */
             /*             if(drive < 4){ */
             /*                 loci_cfg.fdc_on = 0x01; */
-            /*                 tui_set_data(IDX_FDC_ON,txt_on); */
-            /*                 tui_draw_widget(IDX_FDC_ON); */
-            /*             } */
             /*             if(drive == 4){ */
             /*                 loci_cfg.tap_on = 0x01; */
-            /*                 update_onoff_btn(IDX_TAP_ON,loci_cfg.tap_on); */
             /*                 loci_cfg.ald_on = 0x01; */
             /*                 update_load_btn(); */
             /*                 update_tap_counter(); */
-            /*             } */
             /*             if(drive == 6){ */
             /*                 update_tap_counter(); */
-            /*             } */
-            /*     } */
-            /* } */
-            /* break; */
 //        case(KEY_RETURN):
 //if(tui_get_type(tui_get_current()) == TUI_INP){
 //dir_ok = dir_fill(loci_cfg.path);
@@ -517,18 +413,8 @@ void do_tap() {
 //            }
 //            if(calling_widget == -1){   //Return to Oric
   //              boot(false);
-//            }else{                      //Escape from popup
-//                tui_clear_box(1);
-//                tui_draw(ui);
-//                tui_set_current(calling_widget);
-//                calling_widget = -1;
-//            }
-//            break;
 
 //        default:
-//n            idx = tui_get_current();
-//            if(tui_get_type(idx) == TUI_INP){
-  //              tmp_ptr = (char*)tui_get_data(idx);
 //                len = strlen(tmp_ptr);
 //                if(len < (tui_get_len(idx)-1)){
 //                    tmp_ptr[len] = key;
@@ -536,10 +422,13 @@ void do_tap() {
 //                    tui_draw_widget(idx);
 //                    tui_toggle_highlight(idx);
 //                }
-//            }else{  
+
 //---Main menu keyboard shortcuts
+
+// ???
+
 //                                    tmp_ptr[0] = '/';
-///n                                    len = strlen(loci_cfg.path);
+//                                    len = strlen(loci_cfg.path);
  //                                   strncat(loci_cfg.path,tmp_ptr,256-len);
 //                                    tmp_str[0] = '0';
 //                                    tmp_str[1] = ':';
@@ -551,28 +440,8 @@ void do_tap() {
 //                                    loci_cfg.path[len] = '\0';
 //                                }
 //                                break;
-// case('?'):  //Unshifted '/'
-// if((ret = strrchr(loci_cfg.path,'/')) != NULL){
-//  ret[0] = 0x00;
-// }else{
-//  loci_cfg.path[0] = 0x00;
-// }
-//                                dir_ok = update_dir_ui();
-//
-//                        }
-//                    }
-//                }
-// already:                //screen[ 0 + y++] = key;
-//            }
-//    }
-
-// LOL? wtf?
-//    if(y>35) 
-//        y = 0;
-}
 
 // jsk: generalize?
-
 unsigned char Mouse(unsigned char key){
     static uint16_t prev_pos = 0;
     static int8_t sx = 0, sy = 0;
