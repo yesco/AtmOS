@@ -12,6 +12,8 @@
 #define TTY // minimal conio-raw
 #include "../../simple6502js/65lisp/conio-raw.c"
 
+extern void init_display();
+
 extern uint8_t irq_ticks;
 #pragma zpsym ("irq_ticks")
 
@@ -239,6 +241,8 @@ unsigned char Mouse(unsigned char key){
 
 void main(void){
   char key;
+
+  init_display(); // inits loci font
 
   clrscr();
   printf("AtmOS v0.01 (c) Jonas S Karlsson, jsk@yesco.org");
