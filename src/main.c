@@ -247,26 +247,6 @@ void do_return() {
   boot(true);
 }
 
-
-void do_tap() {
-  //if(calling_widget <= IDX_DF3)
-  //strcpy(filter,".dsk");
-  //else if(calling_widget == IDX_TAP)
-  //strcpy(filter,".tap");
-  //else
-  //strcpy(filter,".rom");
-  //popup[IDX_PATH].data = (char*)&loci_cfg.path;
-
-  //dir_ok = update_dir_ui();
-
-  // TODO: do_eject(4,IDX_TAP);
-  // TODO: update_tap_counter();
-  //case(IDX_ROM_FILE):
-  // TODO:(jsk): do_eject(5,IDX_ROM_FILE);
-  //if(dir_ok && idx > POPUP_FILE_START && loci_cfg.path[0]=='0'){
-    //tmp_ptr = (char*)tui_get_data(idx);
-}
-
 /*         tmp_ptr[0]='/'; */
 /*         len = strlen(tmp_ptr); */
 /*         do{ */
