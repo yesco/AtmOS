@@ -1,5 +1,4 @@
 #include <loci.h>
-//#include "tui.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -18,15 +17,11 @@ extern uint8_t irq_ticks;
 
 char filter[6] = ".dsk";
 
-//char tmp_str[256];
-
 bool return_possible;
 
 struct _loci_cfg loci_cfg;
 
-// dir_cmp -- compare directory entries
-int dir_cmp(const void *lhsp,const void *rhsp)
-{
+int dir_cmp(const void *lhsp, const void *rhsp) {
   const char *lhs = *((const char**)lhsp);
   const char *rhs = *((const char**)rhsp);
   int cmp;
@@ -50,24 +45,22 @@ int dir(char* dname){
   //tail = 4; //strlen("/..")+1; // jsk: hmmm?
 
   while(1) {
+
     // - Skip hidden files
     do {
       fil = readdir(dir);
     } while(fil->d_name[0]=='.');
 
-    if (fil->d_name[0] == 0) break; // End of directory listing
+    // End of directory listing
+    if (fil->d_name[0] == 0) break;
 
+    // dir? sys? file?
     if (fil->d_attrib & DIR_ATTR_DIR){
       printf(" DIR:");
     } else if (fil->d_attrib & DIR_ATTR_SYS){
-      printf(" [");
-    } else {
-      if (filter[0]){
-        if (!strcasestr(fil->d_name, filter)) {
-          //printf(" NOT:");
-          continue; 
-        }
-      }
+      printf(" ["); // TODO(jsk): ??
+    } else if (filter[0] && !strcasestr(fil->d_name, filter)) {
+      continue;
     }
 
     printf("%s ", fil->d_name);
@@ -78,40 +71,36 @@ int dir(char* dname){
   return ret;
 }
 
-uint8_t tap_list(void){
+int tap_list(void){
   tap_header_t hdr;
-  long counter;
   unsigned int start_addr, end_addr, size;
-    
+  int res= 0;
+
   //Using fixed 64 byte entries for tape content
   while(1) { // (dir_entries < (DIR_BUF_SIZE/64))){
-    counter = tap_read_header(&hdr);
+    long counter = tap_read_header(&hdr);
     if (counter == -1) break;
     start_addr = (unsigned int)((hdr.start_addr_hi<<8) | hdr.start_addr_lo);
-    end_addr =   (unsigned int)((hdr.end_addr_hi<<8)   | hdr.end_addr_lo);
+    end_addr =   (unsigned int)((hdr.end_addr_hi  <<8) | hdr.end_addr_lo);
     if (start_addr > end_addr) // Bad/unsupported header
       size = 0;
     else
       size = end_addr - start_addr;
 
-    //*((long*)(&dir_buf[dir_entries*64])) = counter;
-
-    printf(//&dir_buf[(dir_entries*64) + 4],
-           " %-12.12s %-3s $%04X %5db",
+    printf(" %-12.12s %-3s $%04X %5db",
            hdr.filename[0] ? (char*)hdr.filename : "<no name>",
            hdr.type == 0x80 ? "BIN" : "BAS",    //TODO Incomplete Type decode
            start_addr,
            size
            );
-    //dir_ptr_list[-(dir_entries+1)] = &dir_buf[(dir_entries*64)+4];
-    //dir_entries++;
-    //Seek over file on tape
-    counter += sizeof(tap_header_t) + 4 + size;
+    ++res;
+
+    // Seek over file on tape
+    counter += sizeof(tap_header_t) + 4 + size; // TODO(jsk): 4?
     tap_seek(counter);
   }
   //qsort(&dir_ptr_list[-(dir_entries)], dir_entries, sizeof(char*), dir_cmp);
-  //return dir_entries;
-  return 1;
+  return res;
 }
 
 int8_t calling_widget = -1;
@@ -136,14 +125,11 @@ void boot(bool do_return){
 
   VIA.ier = 0xC0;
 
-  //tui_cls(3);
-  //clrscr();
+  // clrscr();
   printf("\n%%DEBUG: !ROM\n");
 }
 
-void do_return() {
-  boot(true);
-}
+void do_return() { boot(true); }
 
 /*         tmp_ptr[0]='/'; */
 /*         len = strlen(tmp_ptr); */
@@ -160,69 +146,17 @@ void do_return() {
 /*             sprintf(TUI_SCREEN_XY_CONST(37,1),"%02x",errno); */
 /*         dir_ok = dir(loci_cfg.path); */
 /*         parse_files(); */
-/*         //tui_draw(popup); */
-/*     } */
-/* }                           */
-//}
-//break;
-//        case 0x82:
-// space
-//            if(calling_widget == -1){
-/*     if(calling_widget <= IDX_DF3) */
-/*         strcpy(filter,".dsk"); */
-/*     else if(calling_widget == IDX_TAP) */
-/*         strcpy(filter,".tap"); */
-/*     else */
-/*         strcpy(filter,".rom"); */
-/*     popup[IDX_PATH].data = (char*)&loci_cfg.path; */
-/*     dir_ok = update_dir_ui(); */
-//case(IDX_EJECT_ROM):
-//do_eject(5,IDX_ROM_FILE);
-//case(IDX_TAP_REW):
-//TAP.cmd = TAP_CMD_REW;
-//update_tap_counter();
-//case(IDX_TAP_FFW):
-//TAP.cmd = TAP_CMD_FFW;
-//nupdate_tap_counter();
-//            }else{
-//dir_offset -= DIR_PAGE_SIZE;
-//parse_files();
-//                  if(dir_entries)
-//                            tui_set_current(POPUP_FILE_START);
-//case(IDX_RPAGE):
-//                        dir_offset += DIR_PAGE_SIZE;
-//parse_files();
-//                  case(IDX_FILTER):
-//                        tmp_ptr = (char*)tui_get_data(idx);
-//                        len = strlen(tmp_ptr);
-//                        if(len < (tui_get_len(idx)-1)){
-//                            tmp_ptr[len] = key;
-//                            tmp_ptr[len+1] = '\0';
-/*       default: */
-/*            //Selection from the list */
-/*             tmp_ptr = (char*)tui_get_data(tui_get_current()); */
-/*             if(tmp_ptr[0]=='/' || tmp_ptr[0]=='['){    //Directory or device selection */
 
-// HMMM?
+// space
+
+//
+/// what is this?
 /*                 if(tmp_ptr[0]=='['){ */
 /*                     loci_cfg.path[0] = tmp_ptr[1]; */
 /*                     loci_cfg.path[1] = tmp_ptr[2]; */
 /*                     loci_cfg.path[2] = 0x00; */
 
 // HMMM?
-/*                 }else if(tmp_ptr[1]=='.'){              //Go back down (/..) */
-/*                     if((ret = strrchr(loci_cfg.path,'/')) != NULL){ */
-/*                         ret[0] = 0x00; */
-/*                     }else{ */
-/*                         loci_cfg.path[0] = 0x00; */
-/*                     } */
-/*                 }else{ */
-/*                     strncat(loci_cfg.path,tmp_ptr,256-strlen(loci_cfg.path)); */
-/*                 } */
-/*                 dir_ok = update_dir_ui(); */
-/*                 break; */
-/*             } */
-
 /*                 case(IDX_TAP): */
 /*                     drive = 4; */
 /*                     break; */
@@ -238,81 +172,31 @@ void do_return() {
 /*                 }else{ */
 /*                     loci_cfg.mounts &= ~1u << drive; */
 /*                 } */
-/*             else */
+
+
 /*                 tap_seek(*((long*)(tmp_ptr-4-1)));  //Seek to start of header */
 
 /*             if(drive<6){ */
 /*                 strncpy(loci_cfg.drv_names[drive],tmp_ptr,32); */
 /*                 tui_set_data(calling_widget,loci_cfg.drv_names[drive]); */
+
 /*             if(drive < 4){ */
 /*                 loci_cfg.fdc_on = 0x01; */
 /*             if(drive == 4){ */
 /*                 loci_cfg.tap_on = 0x01; */
 /*                 loci_cfg.ald_on = 0x01; */
-/*                 update_load_btn(); */
-/*                 update_tap_counter(); */
 /*             if(drive == 6){ */
 /*                 update_tap_counter(); */
-//        case(KEY_RETURN):
-//if(tui_get_type(tui_get_current()) == TUI_INP){
-//dir_ok = dir(loci_cfg.path);
-///parse_files();
-//tui_draw(popup);
-//if(!dir_ok){
-//                    tui_draw(warning);
-//}
-//}
-//if(calling_widget == -1){
-//                boot(true);
-//            }
-//screen[y++] = 0x00;
-//dir(screen);
-//if(strisquint(screen,filter)){
+//if(strisquint(screen,filter)){ /// ?
 //    DBG_STATUS("HIT ");
 //}else{
 //    DBG_STATUS("MISS");
 //}
-//write(STDOUT_FILENO, screen, y);
-//write(STDOUT_FILENO, '\n', 1);
-//read(STDIN_FILENO, oscreen, 280);
-//break;
-//case 0x83:
-//case(KEY_ESCAPE):
-//            if(!dir_ok){
-//                dir_ok = 1;
-//                tui_clear_box(1);
-//                tui_draw(popup);
-//                break;
-//            }
-//            if(calling_widget == -1){   //Return to Oric
+
+// ESC
 //              boot(false);
 
-//        default:
-//                len = strlen(tmp_ptr);
-//                if(len < (tui_get_len(idx)-1)){
-//                    tmp_ptr[len] = key;
-///                    tmp_ptr[len+1] = '\0';
-//                    tui_draw_widget(idx);
-//                    tui_toggle_highlight(idx);
-//                }
-
-//---Main menu keyboard shortcuts
-
-// ???
-
-//                                    tmp_ptr[0] = '/';
-//                                    len = strlen(loci_cfg.path);
-//                                   strncat(loci_cfg.path,tmp_ptr,256-len);
-//                                    tmp_str[0] = '0';
-//                                    tmp_str[1] = ':';
-//                                    strcpy(&tmp_str[2],tmp_ptr);
-//                                    strcpy(dbg_status,"COPY");
 //                                  file_copy(tmp_str,loci_cfg.path);
-//                                    strcpy(dbg_status,"    ");
-//                                    tmp_ptr[0] = ' ';
-//                                    loci_cfg.path[len] = '\0';
-//                                }
-//                                break;
 
 // jsk: generalize?
 unsigned char Mouse(unsigned char key){
