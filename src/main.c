@@ -34,7 +34,6 @@ unsigned int dir_entries;
 int dir_offset;
 char dir_lpage[2];
 char dir_rpage[2];
-uint8_t dir_needs_refresh;
 #define DIR_PAGE_SIZE 24
 
 bool return_possible;
@@ -42,7 +41,7 @@ bool return_possible;
 struct _loci_cfg loci_cfg;
 
 int dir_cmp(const void *lhsp,const void *rhsp);
-uint8_t dir_fill(char* dname);
+uint8_t dir(char* dname);
 uint8_t tap_list(void);
 void boot(bool do_return);
 
@@ -58,75 +57,59 @@ int dir_cmp(const void *lhsp,const void *rhsp)
   cmp = stricmp(lhs, rhs);
 
   //Sort dirs before files by inverting result
-  if(lhs[0] != rhs[0]){
-    return -cmp;
-  }else{
-    return cmp;
-  }
+  return (lhs[0] != rhs[0])? -cmp: +cmp;
 }
 
-/* Fill the directory buffer with filenames from the bottom
-   and pointers from the top.
-   Returns 0 if buffer becomes full before all dir entries are captured
-*/
-uint8_t dir_fill(char* dname){
+uint8_t dir(char* dname){
   DIR* dir;
   struct dirent* fil;
-  uint16_t tail;     //Filename buffer tail
   uint8_t ret;
   int len;
 
-  if (!dir_needs_refresh){
-    //    return 1;
-  }
-  //DBG_STATUS("odir");
   dir = opendir(dname);
-  if (dname[0]==0x00){     //Root/device list
-    tail = 0;
+  if (dname[0]==0x00){     // Root/device list
     dir_entries = 0;
-  } else {                  //Non-root
+  } else {                  // Non-root
     strcpy(dir_buf,"/..");
     dir_ptr_list[-1] = dir_buf;
-    tail = 4; //strlen("/..")+1
+    //tail = 4; //strlen("/..")+1
     dir_entries = 1;
   }
   dir_offset = 0;
   ret = 1;
   //DBG_STATUS("rdir");
-  while(tail < DIR_BUF_SIZE){             //Safeguard
-    do {
-      fil = readdir(dir);
-    } while(fil->d_name[0]=='.');        //Skip hidden files
-    if (fil->d_name[0] == 0){            //End of directory listing
-      break;
-    }
-    dir_ptr_list[-(++dir_entries)] = &dir_buf[tail];  
+  while(1) { // tail < DIR_BUF_SIZE) { // Safeguard
+    // Skip hidden files (jsk:why?)
+    //do {
+    //fil = readdir(dir);
+    //} while(fil->d_name[0]=='.');
+
+    if (fil->d_name[0] == 0) break; // End of directory listing
+
+    //dir_ptr_list[-(++dir_entries)] = &dir_buf[tail];  
+
     if (fil->d_attrib & DIR_ATTR_DIR){
-      dir_buf[tail++] = '/';
+      //dir_buf[tail++] = '/';
+      printf(" DIR:");
     } else if (fil->d_attrib & DIR_ATTR_SYS){
-      dir_buf[tail++] = '[';
+      //dir_buf[tail++] = '[';
+      printf(" [");
     } else {
       if (filter[0]){
-        if (!strcasestr(fil->d_name, filter)){
-          dir_entries--;  //roll-back
-          continue;       //next file
+        if (!strcasestr(fil->d_name, filter)) {
+          dir_entries--;
+          printf("NOT:");
+          continue; 
         }
       }
-      dir_buf[tail++] = ' ';
+      //dir_buf[tail++] = ' ';
     }
+
     len = strlen(fil->d_name);
-    if (len > (DIR_BUF_SIZE-tail-(dir_entries*sizeof(char*)))){
-      ret = 0;                     //Buffer is full
-      dir_entries--;                //Rewind inclomplete entry
-      break;
-    } else {
-      strcpy(&dir_buf[tail], fil->d_name);
-      tail += len + 1;
-    }
+    printf("%s ", fil->d_name);
   }
   closedir(dir);
-  qsort(&dir_ptr_list[-(dir_entries)], dir_entries, sizeof(char*), dir_cmp);
-  dir_needs_refresh = 0;
+  //qsort(&dir_ptr_list[-(dir_entries)], dir_entries, sizeof(char*), dir_cmp);
   return ret;
 }
 
@@ -210,7 +193,7 @@ void do_return() {
 // ERROR
 /*         if(mia_call_int_errno(MIA_OP_UNLINK)<0) */
 /*             sprintf(TUI_SCREEN_XY_CONST(37,1),"%02x",errno); */
-/*         dir_ok = dir_fill(loci_cfg.path); */
+/*         dir_ok = dir(loci_cfg.path); */
 /*         parse_files(); */
 /*         //tui_draw(popup); */
 /*     } */
@@ -307,7 +290,7 @@ void do_return() {
 /*                 update_tap_counter(); */
 //        case(KEY_RETURN):
 //if(tui_get_type(tui_get_current()) == TUI_INP){
-//dir_ok = dir_fill(loci_cfg.path);
+//dir_ok = dir(loci_cfg.path);
 ///parse_files();
 //tui_draw(popup);
 //if(!dir_ok){
@@ -318,7 +301,7 @@ void do_return() {
 //                boot(true);
 //            }
 //screen[y++] = 0x00;
-//dir_fill(screen);
+//dir(screen);
 //if(strisquint(screen,filter)){
 //    DBG_STATUS("HIT ");
 //}else{
