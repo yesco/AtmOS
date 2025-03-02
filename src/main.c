@@ -20,53 +20,53 @@ extern uint8_t irq_ticks;
 extern uint8_t irq_ticks;
 #pragma zpsym ("irq_ticks")
 
-char txt_title[40];
-const char txt_menu[] = "Select";
-const char txt_mdisc[] = "Microdisc";
-const char txt_df0[] = "A:";
-const char txt_df1[] = "B:";
-const char txt_df2[] = "C:";
-const char txt_df3[] = "D:";
-const char txt_tape[] = "Cassette";
-const char txt_tap[] = "tap:";
-const char txt_auto[] = "\024Auto \x10";
-const char txt_bit[] = "\024Bits \x10";
-const char txt_cload[] = "\021CLOAD \x10";
-const char txt_orom[] = "Oric ROM";
-const char txt_rom[] = "rom:";
-const char txt_basic11[] = "\024Atmos \x10";
-const char txt_basic10[] = "\024Oric-1\x10";
-const char txt_custom[] = "\021Custom\x10";
-const char txt_mouse[] = "Mouse";
-const char txt_x[] = "[x]";
-const char txt_on[] = "\x14on  \x10";
-const char txt_off[] = "\x11off \x10";
-const char txt_std[] = "\010";
-const char txt_alt[] = "\011";
-const char txt_usb[] = "\x09\x04#%&()";
-const char txt_rew[] = "*";
-const char txt_neg[] = "-";
-const char txt_ffw[] = "+";
-const char txt_eject[] = ",";
-const char txt_locked[] = "!";
-const char txt_unlocked[] = "\"";
-const char txt_warn_sign[] = "\x01!\x03";
-const char txt_dir_warning[] = "Max files. Use filter";
-const char txt_boot[] = "\x13\004Boot  ";
-const char txt_return[] = "\x13\004Return  \x10";
-const char txt_spinner[] = "/-\\|";
-const char txt_map[] = "RV1 adjust";
-const char txt_timing[] = "Timing";
-const char txt_filter[] = "[      ]";
-const char txt_booting[] = "Booting";
-const char txt_returning[] = "Returning";
-const char txt_help[] = "\006ESC\003= boot\006RETURN\003= return";
-char txt_rv1[] = "--";
-char txt_tior[] = "tior --";
-char txt_tiow[] = "tiow --";
-char txt_tiod[] = "tiod --";
-char txt_tadr[] = "tadr --";
-char txt_cnt[8];
+/* char txt_title[40]; */
+/* const char txt_menu[] = "Select"; */
+/* const char txt_mdisc[] = "Microdisc"; */
+/* const char txt_df0[] = "A:"; */
+/* const char txt_df1[] = "B:"; */
+/* const char txt_df2[] = "C:"; */
+/* const char txt_df3[] = "D:"; */
+/* const char txt_tape[] = "Cassette"; */
+/* const char txt_tap[] = "tap:"; */
+/* const char txt_auto[] = "\024Auto \x10"; */
+/* const char txt_bit[] = "\024Bits \x10"; */
+/* const char txt_cload[] = "\021CLOAD \x10"; */
+/* const char txt_orom[] = "Oric ROM"; */
+/* const char txt_rom[] = "rom:"; */
+/* const char txt_basic11[] = "\024Atmos \x10"; */
+/* const char txt_basic10[] = "\024Oric-1\x10"; */
+/* const char txt_custom[] = "\021Custom\x10"; */
+/* const char txt_mouse[] = "Mouse"; */
+/* const char txt_x[] = "[x]"; */
+/* const char txt_on[] = "\x14on  \x10"; */
+/* const char txt_off[] = "\x11off \x10"; */
+/* const char txt_std[] = "\010"; */
+/* const char txt_alt[] = "\011"; */
+/* const char txt_usb[] = "\x09\x04#%&()"; */
+/* const char txt_rew[] = "*"; */
+/* const char txt_neg[] = "-"; */
+/* const char txt_ffw[] = "+"; */
+/* const char txt_eject[] = ","; */
+/* const char txt_locked[] = "!"; */
+/* const char txt_unlocked[] = "\""; */
+/* const char txt_warn_sign[] = "\x01!\x03"; */
+/* const char txt_dir_warning[] = "Max files. Use filter"; */
+/* const char txt_boot[] = "\x13\004Boot  "; */
+/* const char txt_return[] = "\x13\004Return  \x10"; */
+/* const char txt_spinner[] = "/-\\|"; */
+/* const char txt_map[] = "RV1 adjust"; */
+/* const char txt_timing[] = "Timing"; */
+/* const char txt_filter[] = "[      ]"; */
+/* const char txt_booting[] = "Booting"; */
+/* const char txt_returning[] = "Returning"; */
+/* const char txt_help[] = "\006ESC\003= boot\006RETURN\003= return"; */
+/* char txt_rv1[] = "--"; */
+/* char txt_tior[] = "tior --"; */
+/* char txt_tiow[] = "tiow --"; */
+/* char txt_tiod[] = "tiod --"; */
+/* char txt_tadr[] = "tadr --"; */
+/* char txt_cnt[8]; */
 
 char filter[6] = ".dsk";
 
@@ -418,16 +418,8 @@ void boot(bool do_return){
     char* boot_text;
     if(do_return && !return_possible)
         return;
-    if(do_return)
-        boot_text = (char*)&txt_returning;
-    else
-        boot_text = (char*)&txt_booting;
-    //tui_cls(3);
-    clrscr();
-    //strcpy(TUI_SCREEN_XY_CONST(17,14),boot_text);
-    printf("!boot_test\n");//puts(boot_test);
-
-    loci_cfg.tui_pos = tui_get_current();
+    printf("!boot: %s\n", do_return? "returning": "booting");
+    //clrscr();
     persist_set_loci_cfg(&loci_cfg);
     persist_set_magic();
     mia_set_ax(0x80 | (loci_cfg.ald_on <<4) | (loci_cfg.bit_on <<3) | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
@@ -441,100 +433,27 @@ void boot(bool do_return){
     }
     VIA.ier = 0xC0;
     //tui_cls(3);
+    //clrscr();
     //tui_draw(ui);
     //DBG_STATUS("!ROM");
     printf("\n%%DEBUG: !ROM\n");
 }
 
-void update_onoff_btn(uint8_t idx, uint8_t on){
-  printf("!update_onoff_btn: %d %d\n", idx, on);
-  //if(on){
-  //tui_set_data(idx,txt_on);
-//}else{
-  //tui_set_data(idx,txt_off);
-//}
-  //tui_draw_widget(idx);
-}
-
-void update_mode_btn(){
-  printf("!update_mode_btn\n");
-  //if(loci_cfg.bit_on){
-  //tui_set_data(IDX_TAP_BIT,txt_bit);
-//}else{
-  //tui_set_data(IDX_TAP_BIT,txt_auto);
-//}
-  //tui_draw_widget(IDX_TAP_BIT);
-}
-
-void update_rom_btn(){
-  printf("!update_rom_btn: %d >%s< >%s<\n", loci_cfg.mounts&(1u<<5)?txt_custom: loci_cfg.b11_on? txt_basic11: txt_basic10);
-  //if(loci_cfg.mounts & (1u << 5)){
-  //tui_set_data(IDX_ROM,txt_custom);
-  //tui_set_type(IDX_ROM,TUI_TXT);
-  //tui_draw_widget(IDX_ROM);
-//}else{
-  //if(loci_cfg.b11_on){
-  //tui_set_data(IDX_ROM,txt_basic11);
-//}else{
-  //tui_set_data(IDX_ROM,txt_basic10);
-//}
-  //tui_set_type(IDX_ROM,TUI_BTN);
-  //tui_draw_widget(IDX_ROM);
-  //tui_toggle_highlight(IDX_ROM);
-//}
-}
-
-void update_eject_btn(uint8_t drv){
-  printf("!update_eject_btn\n");
-  //tui_widget* widget;
-  //uint8_t idx;
-  //idx = tui_eject_idx[drv];
-  //widget = &ui[idx];
-  //if(loci_cfg.mounts & (1u << drv)){
-  //widget->type = TUI_SEL;
-  //tui_draw_widget(idx);
-//}else{
-  //tui_clear_txt(idx);
-  //widget->type = TUI_NOP;
-//}
-}
-
-void update_load_btn(){
-  printf("!update_load_btn >%s<\n", loci_cfg.ald_on?txt_auto:txt_cload);
-  //if(loci_cfg.ald_on){
-  //tui_set_data(IDX_TAP_LOAD,txt_auto);
-//}else{
-  //tui_set_data(IDX_TAP_LOAD,txt_cload);
-//}
-  //tui_draw_widget(IDX_TAP_LOAD);
-}
-
-void update_tap_counter(void){
-  printf("!update_tap_counter: %7lu\n", tap_tell());
-  //sprintf(txt_cnt,"%7lu",tap_tell());
-  //tui_draw_widget(IDX_TAP_CNT);
-}
-
 void do_eject(uint8_t drv, uint8_t ui_idx){
   umount(drv);
   loci_cfg.drv_names[drv][0] = '\0';
-  //tui_clear_txt(ui_idx);
-  //tui_draw_widget(ui_idx);
   loci_cfg.mounts &= ~(1u << drv);
-  update_eject_btn(drv);
 }
 
 void do_return() {
   //dir_ok = dir_fill(loci_cfg.path);
   parse_files_to_widget();
-  //tui_draw(popup);
   boot(true);
 }
 
 
 void do_tap() {
   calling_widget = tui_get_current();
-  tui_toggle_highlight(calling_widget);
   //if(calling_widget <= IDX_DF3)
   //strcpy(filter,".dsk");
   //else if(calling_widget == IDX_TAP)
@@ -555,15 +474,6 @@ void DisplayKey(unsigned char key) {
     uint8_t idx;
     uint8_t len;
 
-    screen = (char*)(0xbb80+40*20+1);
-    //oscreen = (char*)(0xbb80+40*21);
-    //screen[0] = 16+7;
-    //screen[1] = 0+4;
-//    switch(key){
-//      case (0x7f):
-    //case(KEY_DELETE):
-        printf("!DisplayKey: delete\n");
-        //idx = tui_get_current();
         //if(tui_get_type(idx) == TUI_INP){
         //tmp_ptr = (char*)tui_get_data(idx);
         //len = strlen(tmp_ptr);
@@ -965,7 +875,9 @@ void main(void){
         unsigned char key = cgetc();
         key = Mouse(key);
         if(key) DisplayKey(key);
-        TUI_PUTC_CONST(39,1,txt_spinner[(irq_ticks & 0x03)]);
+        // TODO(jsk):
+        //TUI_PUTC_CONST(39,1,txt_spinner[(irq_ticks & 0x03)]);
+
         //kb = 0;
         //i = 7;
         //do{
