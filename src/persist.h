@@ -1,3 +1,4 @@
+#include <stdint.h>
 #include <stdbool.h>
 
 typedef struct _loci_cfg {

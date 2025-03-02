@@ -1,5 +1,5 @@
 #include <loci.h>
-#include "tui.h"
+//#include "tui.h"
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -21,8 +21,7 @@ char filter[6] = ".dsk";
 uint8_t rv1;
 uint8_t spin_cnt;
 
-char* dbg_status = TUI_SCREEN_XY_CONST(35,1);
-#define DBG_STATUS(fourc) strcpy(dbg_status,fourc)
+//#define DBG_STATUS(fourc) strcpy(dbg_status,fourc)
 
 char tmp_str[256];
 
@@ -354,63 +353,49 @@ unsigned char Mouse(unsigned char key){
   static uint16_t prev_pos = 0;
   static int8_t sx = 0, sy = 0;
   static uint8_t  prev_x = 0, prev_y = 0, prev_btn = 0, cursor = 0; 
-    
-  uint16_t pos;
   uint8_t x,y,btn;
-  //char *screen;
-  uint8_t widget;
 
-  if(!loci_cfg.mou_on)
-    return key;
+  if (!loci_cfg.mou_on) return key;
     
-  //screen = TUI_SCREEN;
+  // read mouse
   MIA.addr0 = 0x7000;
   MIA.step0 = 1;
   btn = MIA.rw0;
   x = MIA.rw0;
   y = MIA.rw0;
+
+  // undraw move draw
+  if (cursor) *SCREENXY(sx, sy) ^= 0x80;
   sx = sx + (((int8_t)(x - prev_x))>>3);
   sy = sy + (((int8_t)(y - prev_y))>>3);
-  if(sx >= TUI_SCREEN_W)
-    sx = TUI_SCREEN_W-1;
-  if(sx < 0)
-    sx = 0;
-  if(sy >= TUI_SCREEN_H)
-    sy = TUI_SCREEN_H-1;
-  if(sy < 0)
-    sy = 0;
-  pos = (TUI_SCREEN_W * sy) + sx;
-  if(pos != prev_pos){
-    //if(cursor) screen[prev_pos] ^= 0x80;
-    cursor = 1;
-    //screen[pos] ^= 0x80;
-    prev_pos = pos;
-    prev_x = x;
-    prev_y = y;
-  }
+  if (sx >= 40) sx= 39;
+  if (sx < 0)   sx= 0;
+  if (sy >= 25) sy= 25;
+  if (sy < 0)   sy= 0;
+  cursor= 1;
+  *SCREENXY(sx, sy) ^= 0x80;
     
-  if(((btn ^ prev_btn) & btn & 0x01)){  //Left mouse button release
-    widget = tui_hit(sx,sy);
-    if(widget){
-      cursor = 0;
-      tui_set_current(widget);
-      key = ' ';//KEY_SPACE;
-    }
+  if (((btn ^ prev_btn) & btn & 0x01)){  //Left mouse button release
+//    if(widget){
+//      cursor = 0;
+//      tui_set_current(widget);
+//      key = ' ';//KEY_SPACE;
+//    }
   } 
-  prev_btn = btn;
+
+  prev_btn= btn;
   return key;
 }
 
 void main(void){
-  uint8_t i;
+  char key;
 
-  //tui_cls(3);
   clrscr();
-  //init_display();
+  printf("AtmOS v0.01 (c) Jonas S Karlsson, jsk@yesco.org");
     
   return_possible = mia_restore_buffer_ok();
 
-  if(!persist_get_loci_cfg(&loci_cfg)){
+  if (!persist_get_loci_cfg(&loci_cfg)){
     loci_cfg.fdc_on = 0x00;
     loci_cfg.tap_on = 0x00;
     loci_cfg.bit_on = 0x00;
@@ -430,7 +415,6 @@ void main(void){
   }
    
   while(1){
-    char key;
     printf("\n\n");
     printf("Drive: a/b/c/d\n");
     printf("Tape: t/k/m\n");
