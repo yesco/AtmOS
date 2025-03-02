@@ -18,33 +18,11 @@ extern uint8_t irq_ticks;
 
 char filter[6] = ".dsk";
 
-uint8_t rv1;
-uint8_t spin_cnt;
-
-//#define DBG_STATUS(fourc) strcpy(dbg_status,fourc)
-
-char tmp_str[256];
-
-#define DIR_BUF_SIZE 3072
-char dir_buf[DIR_BUF_SIZE];
-
-char** dir_ptr_list = (char **)&dir_buf[DIR_BUF_SIZE];  //Reverse array
-unsigned int dir_entries;
-int dir_offset;
-char dir_lpage[2];
-char dir_rpage[2];
-#define DIR_PAGE_SIZE 24
+//char tmp_str[256];
 
 bool return_possible;
 
 struct _loci_cfg loci_cfg;
-
-int dir_cmp(const void *lhsp,const void *rhsp);
-uint8_t dir(char* dname);
-uint8_t tap_list(void);
-void boot(bool do_return);
-
-unsigned char Mouse(unsigned char key);
 
 // dir_cmp -- compare directory entries
 int dir_cmp(const void *lhsp,const void *rhsp)
@@ -59,56 +37,44 @@ int dir_cmp(const void *lhsp,const void *rhsp)
   return (lhs[0] != rhs[0])? -cmp: +cmp;
 }
 
-uint8_t dir(char* dname){
+int dir(char* dname){
   DIR* dir;
   struct dirent* fil;
-  uint8_t ret;
-  int len;
+  int ret= 0;
 
   dir = opendir(dname);
-  if (dname[0]==0x00){     // Root/device list
-    dir_entries = 0;
-  } else {                  // Non-root
-    strcpy(dir_buf,"/..");
-    dir_ptr_list[-1] = dir_buf;
-    //tail = 4; //strlen("/..")+1
-    dir_entries = 1;
-  }
-  dir_offset = 0;
-  ret = 1;
-  //DBG_STATUS("rdir");
-  while(1) { // tail < DIR_BUF_SIZE) { // Safeguard
-    // Skip hidden files (jsk:why?)
-    //do {
-    //fil = readdir(dir);
-    //} while(fil->d_name[0]=='.');
+  if (dname[0]==0x00) return 0; // Root/device list
+
+  // Non-root
+  //strcpy(dir_buf, "/..");
+  //tail = 4; //strlen("/..")+1; // jsk: hmmm?
+
+  while(1) {
+    // - Skip hidden files
+    do {
+      fil = readdir(dir);
+    } while(fil->d_name[0]=='.');
 
     if (fil->d_name[0] == 0) break; // End of directory listing
 
-    //dir_ptr_list[-(++dir_entries)] = &dir_buf[tail];  
-
     if (fil->d_attrib & DIR_ATTR_DIR){
-      //dir_buf[tail++] = '/';
       printf(" DIR:");
     } else if (fil->d_attrib & DIR_ATTR_SYS){
-      //dir_buf[tail++] = '[';
       printf(" [");
     } else {
       if (filter[0]){
         if (!strcasestr(fil->d_name, filter)) {
-          dir_entries--;
-          printf("NOT:");
+          //printf(" NOT:");
           continue; 
         }
       }
-      //dir_buf[tail++] = ' ';
     }
 
-    len = strlen(fil->d_name);
     printf("%s ", fil->d_name);
+    ++ret;
   }
   closedir(dir);
-  //qsort(&dir_ptr_list[-(dir_entries)], dir_entries, sizeof(char*), dir_cmp);
+
   return ret;
 }
 
@@ -455,6 +421,11 @@ void main(void){
     case 'i': // install
       break;
     case '/': case '?': // ? is unshifted /
+      break;
+
+    // - commands
+    case 'l': // ls
+      dir(loci_cfg.path);
       break;
 
     }
