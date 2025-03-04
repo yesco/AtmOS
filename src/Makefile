@@ -11,7 +11,8 @@ ASOURCES = display.s keyboard.s irq.s timings.s vectors.s versions.s tui_asm.s
 LSOURCES = $(wildcard libsrc/*.c)
 LASOURCES = $(wildcard libsrc/*.s)
 
-PROGRAM = locirom
+#PROGRAM = locirom
+PROGRAM = AtmOS.ROM
 LIBRARY = loci.lib
 
 word-dot = $(word $2,$(subst ., ,$1))

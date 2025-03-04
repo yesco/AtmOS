@@ -8,9 +8,26 @@
 #include "libsrc/dirent.h"
 #include "persist.h"
 #include "filemanager.h"
+#include "keyboard.h"
+
+#undef KEY_FUNCT
+#undef KEY_LEFT
+#undef KEY_RIGHT
+#undef KEY_UP
+#undef KEY_DOWN
+
+#undef KEY_RCTRL
+#undef KEY_LCTRL
+#undef KEY_LSHIFT
+#undef KEY_RSHIFT
 
 #define TTY // minimal conio-raw
 #include "../../simple6502js/65lisp/conio-raw.c"
+
+// debug: write a char at last pos of screen
+//   this is to determine current/last state
+//   before crash?
+#define DID(c) *(TEXTLAST)=(c)
 
 extern void init_display();
 
@@ -23,6 +40,8 @@ bool return_possible;
 
 struct _loci_cfg loci_cfg;
 
+char drive;
+
 int dir_cmp(const void *lhsp, const void *rhsp) {
   const char *lhs = *((const char**)lhsp);
   const char *rhs = *((const char**)rhsp);
@@ -34,15 +53,18 @@ int dir_cmp(const void *lhsp, const void *rhsp) {
   return (lhs[0] != rhs[0])? -cmp: +cmp;
 }
 
+// TODO: add paging/return/space
 int dir(char* dname){
   DIR* dir;
   struct dirent* fil;
   int ret= 0;
 
+  dname= "";
   dir = opendir(dname);
   if (dname[0]==0x00) return 0; // Root/device list
 
   // Non-root
+  // jsk: first entry added is ".." to go up? lol
   //strcpy(dir_buf, "/..");
   //tail = 4; //strlen("/..")+1; // jsk: hmmm?
 
@@ -58,17 +80,18 @@ int dir(char* dname){
 
     // dir? sys? file?
     if (fil->d_attrib & DIR_ATTR_DIR){
-      printf(" DIR:");
+      puts(" DIR:");
     } else if (fil->d_attrib & DIR_ATTR_SYS){
-      printf(" ["); // TODO(jsk): ??
+      puts(" ["); // TODO(jsk): ??
     } else if (filter[0] && !strcasestr(fil->d_name, filter)) {
       continue;
     }
 
-    printf("%s ", fil->d_name);
+    puts(fil->d_name); putchar('\t');
     ++ret;
   }
   closedir(dir);
+  putchar('\n');
 
   return ret;
 }
@@ -118,7 +141,7 @@ void boot(bool do_return){
   //mia_set_ax(0x00 | (loci_cfg.b11_on <<2) | (loci_cfg.tap_on <<1) | loci_cfg.fdc_on);
   VIA.ier = 0x7F;         //Disable VIA interrupts
 
-  if(do_return)
+  if (do_return)
     mia_restore_state();
   else {
     mia_clear_restore_buffer();
@@ -133,6 +156,9 @@ void boot(bool do_return){
 
 void do_return() { boot(true); }
 
+// FILENAME: loci_cfg.path "/" tmp_ptr
+
+// jsk: names are pushed backwards, putting / last
 /*         tmp_ptr[0]='/'; */
 /*         len = strlen(tmp_ptr); */
 /*         do{ */
@@ -157,48 +183,6 @@ void do_return() { boot(true); }
 /*                     loci_cfg.path[0] = tmp_ptr[1]; */
 /*                     loci_cfg.path[1] = tmp_ptr[2]; */
 /*                     loci_cfg.path[2] = 0x00; */
-
-// HMMM?
-/*                 case(IDX_TAP): */
-/*                     drive = 4; */
-/*                     break; */
-/*                 case(IDX_ROM_FILE): */
-/*                     drive = 5; */
-/*                     break; */
-/*                 case(IDX_TAP_CNT): */
-/*                     drive = 6;      //Pseudo drive */
-/*             } */
-/*             if(drive<6) */
-/*                 if(mount(drive,loci_cfg.path,tmp_ptr)==0x00){ */
-/*                     loci_cfg.mounts |= 1u << drive; */
-/*                 }else{ */
-/*                     loci_cfg.mounts &= ~1u << drive; */
-/*                 } */
-
-
-/*                 tap_seek(*((long*)(tmp_ptr-4-1)));  //Seek to start of header */
-
-/*             if(drive<6){ */
-/*                 strncpy(loci_cfg.drv_names[drive],tmp_ptr,32); */
-/*                 tui_set_data(calling_widget,loci_cfg.drv_names[drive]); */
-
-/*             if(drive < 4){ */
-/*                 loci_cfg.fdc_on = 0x01; */
-/*             if(drive == 4){ */
-/*                 loci_cfg.tap_on = 0x01; */
-/*                 loci_cfg.ald_on = 0x01; */
-/*             if(drive == 6){ */
-/*                 update_tap_counter(); */
-//if(strisquint(screen,filter)){ /// ?
-//    DBG_STATUS("HIT ");
-//}else{
-//    DBG_STATUS("MISS");
-//}
-
-// ESC
-//              boot(false);
-
-//                                  file_copy(tmp_str,loci_cfg.path);
 
 // jsk: generalize?
 unsigned char Mouse(unsigned char key){
@@ -239,15 +223,100 @@ unsigned char Mouse(unsigned char key){
   return key;
 }
 
+void cd(char* path, char* cd) {
+  while(*cd) {
+
+    switch(*cd) {
+
+    case '.':
+      // up
+      if (cd[1]=='.') {
+        while(*path && path[strlen(path)-1]!='/') {
+          path[strlen(path)-1]= 0;
+        }
+        cd+= 2;
+        if (*cd=='/') continue;
+      }
+      break; // break; wft? ..foo?
+
+    case '/': // root
+      strcpy(path, cd);
+      break;
+
+    // case '[': ???
+      break;
+
+    default:
+      // drive letter?
+      if (cd[1]==':') {
+        // TODO: drive
+        break;
+      }
+
+      // TODO: directory (match?)
+      break;
+    }
+  }
+}
+
+#ifdef FOO
+// Returns: an mallocated string
+//          or NULL on end of file
+char* readline (const char *prompt) {
+  return NULL;
+}
+
+char* fgets(char* s, int size, FILE *stream) {
+}
+
+ssize_t getline(char** lineptr, size_t* n, FILE* stream) {
+}
+
+ssize_t getdelim(char** lineptr, size_t* n, int delim, FILE* stream) {
+}
+#endif // FOO
+
+// __LOCI_MIA:
+// xstack
+// errno_lo, errno_hi
+// op
+// irq
+//    loci_cfg.drv_names[0][0] = 0x00;
+//    loci_cfg.drv_names[1][0] = 0x00;
+//    loci_cfg.drv_names[2][0] = 0x00;
+//    loci_cfg.drv_names[3][0] = 0x00;
+//    loci_cfg.drv_names[4][0] = 0x00;
+//    loci_cfg.drv_names[5][0] = 0x00;
+
+// getcwd_xram(unisnged buf, unsigned len)
+// mount(drive, char* path, filename)
+// umount(drive)
+
+// long tap_seek(long pos)
+// long tap_tell()
+// long tap_read_header(tap_header* h)
+
+// mia_restore_state()
+// uchar mia_restore_buffer_ok()
+// mia_clear_restore_bufffer()
+// char mia_get_vmode()
+
 void main(void){
   char key;
 
+  DID('A');
   init_display(); // inits loci font
 
+  DID('B');
   clrscr();
-  printf("AtmOS v0.01 (c) Jonas S Karlsson, jsk@yesco.org");
+  printf("AtmOS v0.01 (c) Jonas S Karlsson, jsk@yesco.org\n\n");
+  DID('C');
     
+  InitKeyboard();
+  DID('D');
+
   return_possible = mia_restore_buffer_ok();
+  DID('E');
 
   if (!persist_get_loci_cfg(&loci_cfg)){
     loci_cfg.fdc_on = 0x00;
@@ -269,53 +338,137 @@ void main(void){
   }
    
   while(1){
-    printf("\n\n");
-    printf("Drive: a/b/c/d\n");
-    printf("Tape: t/k/m\n");
-    printf("ROM: o/r\n");
-    printf("Filter: f/i(nstall)\n");
-    printf("/ or ? unshifted...\n");
-    putchar('\n');
-    printf("> ");
+    DID('F');
+    puts("\n\n");
+    puts("Drive: a/b/c/d\n");
+    puts("Tape: t/k/m\n");
+    puts("ROM: o/r\n");
+    puts("Filter: f/i(nstall)\n");
+    puts("/ or ? unshifted...\n");
 
-    key = cgetc();
-    key = Mouse(key);
+    putchar('\n');
+
+    // TODO: read errno and print? (if not 0)
+
+    puts("LOCI_CFG.path: ");
+    puts(loci_cfg.path);
+    putchar('>'); putchar(' ');
+
+    DID('G');
+    //key = cgetc(); // TODO: not working? reboots?
+    do { key= ReadKeyNoBounce(); } while(!key);
+    DID('H');
+    //key = Mouse(key);
+    clrscr();
+
+    // TODO: scroll deletes first char on last line??
+    putchar(key);
+    putchar('['); putint(key); putchar(']');
+    putchar('\n');
+    //DID('W');
+    //waitms(1000);
 
     switch(key) {
 
-      // - drive
-    case 'a': case 'b': case 'c': case 'd':
-      umount(key-'a'); // jsk: ???
-      break;
+    // - drive
+    //case 'a': case 'b': case 'c': case 'd':
+      //umount(key-'a'); // jsk: ???
 
-      // - tape
+    // - tape
     case 't':
+      drive= 4;
+      //tap_seek(*((long*)(tmp_ptr-4-1))); // Seek to star t
       break;
     case 'k':
       tap_list();
       break;
-    case 'm':
-      break;
 
-      // - drive
+    // - drive
     case 'o':
+      drive= 5;
       break;
     case 'r':
+      drive= 5;
       break;
 
-      // - etc
-    case 'f':
-      break;
-    case 'i': // install
-      break;
+    // - etc
     case '/': case '?': // ? is unshifted /
       break;
 
     // - commands
-    case 'l': // ls
+    case 'b': // boot
+      boot(false);
+      break;
+    case 'e': // exit
+    case CTRL+'C':
+      do_return(); // lol
+      break;
+
+    case 'f': // "file" (set selected file)
+      // TODO: read line and extract filename
+      if (drive<6) {
+        //strncpy(loci_cfg.drv_names[drive], tmp_ptr, 32);
+        char tmp_ptr[32]= {0};
+        if (mount(drive, loci_cfg.path, tmp_ptr)==0x00){
+          loci_cfg.mounts |= 1u << drive;
+        } else {
+          loci_cfg.mounts &= ~1u << drive;
+        }
+      }
+
+      if (drive<4) {
+        loci_cfg.tap_on = 0;
+        loci_cfg.ald_on = 0;
+        loci_cfg.fdc_on = 0x01;
+      } else if (drive == 4) {
+        loci_cfg.tap_on = 0x01;
+        loci_cfg.ald_on = 0x01;
+        loci_cfg.fdc_on = 0;
+      } else if (drive == 6) { // virtual
+        //update_tap_counter();
+      }
+
+      break;
+
+    // - unixy
+    case 's': // clear Screen
+      clrscr();
+      break;
+
+    case 'm': // mkdir
+//#define MIA_OP_MKDIR 0x83
+//#define MIA_OP_GETCWD 0x88
+      break;
+
+    case 'u': // umount / mount
+//#define MIA_OP_MOUNT 0x90
+//#define MIA_OP_UMOUNT 0x91
+      break;
+
+    case 'd': // date
+//#define MIA_OP_CLOCK_GETRES 0x10
+//#define MIA_OP_CLOCK_GETTIME 0x11
+//#define MIA_OP_CLOCK_SETTIME 0x12
+//#define MIA_OP_CLOCK_GETTIMEZONE 0x13
+      break;
+
+    case 'c': // cp
+      //file_copy(dst, src);
+      break;
+
+    case 'l': // ls / dir
       dir(loci_cfg.path);
       break;
 
+    case 'p': // pwd
+      { char i;
+        for(i=0; i<=6; ++i) {
+          putint(i); putchar(':'); putchar(' '); puts(loci_cfg.drv_names[i]); putchar('\n');
+        }
+        puts("Path: "); puts(loci_cfg.path); putchar('\n');
+      } break;
     }
+
+    DID('I');
   }
 }
