@@ -68,12 +68,12 @@ void putbytes(unsigned long n) {
 }
 
 // TODO: add paging/return/space
-int dir(char* dname){
+int dir(char* dname, char format) {
   DIR* dir;
   struct dirent* fil;
   int ret= 0;
   char color= *WHITE;
-  char* name;
+  char * name, attr, exec;
   unsigned long bytes, sbytes= 0;
 
   dname= "1:";  // just showns directories?
@@ -102,8 +102,10 @@ int dir(char* dname){
     // color type of file
     color= *WHITE; // normal file
 
-    if (fil->d_attrib & DIR_ATTR_DIR) color= *CYAN;
-    else if (fil->d_attrib & DIR_ATTR_SYS) color= *YELLOW;
+    attr= fil->d_attrib;
+    exec= '-';
+    if (attr & DIR_ATTR_DIR) color= *CYAN;
+    else if (attr & DIR_ATTR_SYS) color= *YELLOW;
 
     //if (filter[0] && !strcasestr(fil->d_name, filter)) {
     ////continue;
@@ -124,16 +126,60 @@ int dir(char* dname){
                strcasestr(name, ".sh") ||
                strcasestr(name, ".osh") ||
                strcasestr(name, "rp6502")) {
-      color= *RED;
+      color= *RED; exec= 'x';
     }
 
-    // print file
-    if (curx && ((curx+7)/8)*8+1+strlen(name)+1+3+1>39) putchar('\n');
-    else putchar('\t');
+    sbytes+= (bytes= fil->d_size & 0x00ffffffL);
 
-    putchar(color); puts(name);
-    sbytes+= (bytes= (unsigned int)fil->d_size);
-    putchar(*WHITE); putbytes(bytes);
+    // print file entry
+    switch(format) {
+
+    case 'd': // dos style
+      //  README  .TXT 
+      // 0123456789012
+      {
+        char* ext= strchr(name, '.');
+        if (curx>=3*12) putchar('\n');
+        if (ext) *ext= 0;
+        putchar(color);
+        puts(name);
+        // "tab"
+        while(curx<40 && (curx%12)<12-4)
+          putchar(' ');
+        putchar('.');
+        puts(ext);
+        // "tab"
+        while(curx<40 && (curx%12))
+          putchar(' ');
+      } break;
+        
+    case 'l': // ls -l
+      // drwx- 1234567 <date> <time> <filename>
+      // lrwx-                       link
+      putchar((attr & DIR_ATTR_DIR)? 'd':
+              (attr & DIR_ATTR_SYS)? 's':
+              '-');
+      putchar('r');
+      putchar((attr & DIR_ATTR_RDO)? '-': 'w');
+      putchar(exec);
+      putchar('-');
+      // LOL
+      { char n= sprintf(curp, "%8lu", bytes);
+        curp+= n;
+        curx+= n;
+      }
+      putchar(color); puts(name); putchar('\n');
+      break;
+
+    case 0:
+    default:
+      if (curx && ((curx+7)/8)*8+1+strlen(name)+1+3+1>39) putchar('\n');
+      else putchar('\t');
+
+      putchar(color); puts(name);
+      putchar(*WHITE); putbytes(bytes);
+      break;
+    }
 
     ++ret;
   }
@@ -493,19 +539,23 @@ void main(void){
 //#define MIA_OP_UMOUNT 0x91
       break;
 
-    case 'd': // date
+//    case 'd': // date
 //#define MIA_OP_CLOCK_GETRES 0x10
 //#define MIA_OP_CLOCK_GETTIME 0x11
 //#define MIA_OP_CLOCK_SETTIME 0x12
 //#define MIA_OP_CLOCK_GETTIMEZONE 0x13
-      break;
+//      break;
 
     case 'c': // cp
       //file_copy(dst, src);
       break;
 
-    case 'l': // ls / dir
-      dir(loci_cfg.path);
+    case 'd': // dir
+      dir(loci_cfg.path, 'd');
+      break;
+
+    case 'l': // ls -l
+      dir(loci_cfg.path, 'l');
       break;
 
     case 'p': // pwd
