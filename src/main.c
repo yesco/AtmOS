@@ -53,13 +53,33 @@ int dir_cmp(const void *lhsp, const void *rhsp) {
   return (lhs[0] != rhs[0])? -cmp: +cmp;
 }
 
+void putbytes(unsigned long n) {
+  //putchar('('); putint((int)n); putchar(')');
+
+  if (n<1024) { putint(n); return; }
+  n/= 1024;
+  //putchar('['); putint(n); putchar(']');
+  if (n<1024) { putint(n); putchar('K'); return; }
+  n/= 1024;
+  //putchar('{'); putint(n); putchar('}');
+  if (n<1024) { putint(n); putchar('M'); return; }
+  n/= 1024;
+  putint(n); putchar('G');
+}
+
 // TODO: add paging/return/space
 int dir(char* dname){
   DIR* dir;
   struct dirent* fil;
   int ret= 0;
+  char color= *WHITE;
+  char* name;
+  unsigned long bytes, sbytes= 0;
 
-  dname= "";
+  dname= "1:";  // just showns directories?
+  dname= "1:/";  // just shows directories?
+  //dname= "/"; // TODO: 
+
   dir = opendir(dname);
   if (dname[0]==0x00) return 0; // Root/device list
 
@@ -70,28 +90,56 @@ int dir(char* dname){
 
   while(1) {
 
-    // - Skip hidden files
+    // - Skip hidden files (TODO: enable with -a)
     do {
       fil = readdir(dir);
-    } while(fil->d_name[0]=='.');
+      name= fil->d_name;
+    } while(name[0]=='.');
 
     // End of directory listing
-    if (fil->d_name[0] == 0) break;
+    if (!name[0]) break;
 
-    // dir? sys? file?
-    if (fil->d_attrib & DIR_ATTR_DIR){
-      puts(" DIR:");
-    } else if (fil->d_attrib & DIR_ATTR_SYS){
-      puts(" ["); // TODO(jsk): ??
-    } else if (filter[0] && !strcasestr(fil->d_name, filter)) {
-      continue;
+    // color type of file
+    color= *WHITE; // normal file
+
+    if (fil->d_attrib & DIR_ATTR_DIR) color= *CYAN;
+    else if (fil->d_attrib & DIR_ATTR_SYS) color= *YELLOW;
+
+    //if (filter[0] && !strcasestr(fil->d_name, filter)) {
+    ////continue;
+
+    if (strcasestr(name, ".doc") ||
+        strcasestr(name, ".txt") ||
+        strcasestr(name, ".md") ||
+        strcasestr(name, "read")) {
+      color= *GREEN;
+    } else if (strcasestr(name, ".rom") ||
+               strcasestr(name, "locirom") ||
+               strcasestr(name, ".com") ||
+               strcasestr(name, ".tap") ||
+               strcasestr(name, ".dsk") ||
+               strcasestr(name, ".oxe") ||
+               strcasestr(name, ".exe") ||
+               strcasestr(name, ".bat") ||
+               strcasestr(name, ".sh") ||
+               strcasestr(name, ".osh") ||
+               strcasestr(name, "rp6502")) {
+      color= *RED;
     }
 
-    puts(fil->d_name); putchar('\t');
+    // print file
+    if (curx && ((curx+7)/8)*8+1+strlen(name)+1+3+1>39) putchar('\n');
+    else putchar('\t');
+
+    putchar(color); puts(name);
+    sbytes+= (bytes= (unsigned int)fil->d_size);
+    putchar(*WHITE); putbytes(bytes);
+
     ++ret;
   }
   closedir(dir);
-  putchar('\n');
+  puts("\n    "); putint(ret); puts(" files, ");
+  putbytes(sbytes); puts(" bytes\n");
 
   return ret;
 }
