@@ -27,7 +27,16 @@
 // debug: write a char at last pos of screen
 //   this is to determine current/last state
 //   before crash?
-#define DID(c) *(TEXTLAST)=(c)
+#define DID(c) do { *(SCREENLAST-1)=(c); *(SCREENLAST)=TEXTMODE; } while(0)
+
+// For some reason conio-raw.c cgetc() interferes with ReadKeyNoBounce()
+// ORIC ROM doesn't!
+char loci_cgetc() {
+  char key;
+  do { key= ReadKeyNoBounce(); } while(!key);
+  return key;
+}
+#define cgetc() loci_cgetc()
 
 extern void init_display();
 
@@ -67,6 +76,24 @@ void putbytes(unsigned long n) {
   putint(n); putchar('G');
 }
 
+#ifdef URK // already defined in library, lol
+char* strtok(char* str, const char* delim) {
+  static char* s;
+  char* r;
+  if (str) s= str;
+  // skip leading delim
+  while(*s && strchr(delim, *s)) ++s;
+
+  // after delims
+  r= s;
+  if (!*r) return NULL;
+  // gobble it up
+  while(*s && !strchr(delim, *s)) ++s;
+  if (*s) { *s= 0; ++s; }
+  return r;
+}
+#endif // URK
+
 // TODO: add paging/return/space
 int dir(char* dname, char format) {
   DIR* dir;
@@ -76,9 +103,16 @@ int dir(char* dname, char format) {
   char * name, attr, exec;
   unsigned long bytes, sbytes= 0;
 
-  dname= "1:";  // just showns directories?
-  dname= "1:/";  // just shows directories?
+  dname= "1:";  // 
+  dname= "1:/";  // 
+  dname= ""; // TODO: gives nothing?
   //dname= "/"; // TODO: 
+
+  if (format=='d') {
+    puts(" Volume name is "); puts("<vol>");
+    puts("\n Directory of "); puts(dname);
+    putchar('\n'); putchar('\n');
+  }
 
   dir = opendir(dname);
   if (dname[0]==0x00) return 0; // Root/device list
@@ -104,7 +138,7 @@ int dir(char* dname, char format) {
 
     attr= fil->d_attrib;
     exec= '-';
-    if (attr & DIR_ATTR_DIR) color= *CYAN;
+    if (attr & DIR_ATTR_DIR) color= *BLUE;
     else if (attr & DIR_ATTR_SYS) color= *YELLOW;
 
     //if (filter[0] && !strcasestr(fil->d_name, filter)) {
@@ -112,9 +146,10 @@ int dir(char* dname, char format) {
 
     if (strcasestr(name, ".doc") ||
         strcasestr(name, ".txt") ||
+        strcasestr(name, ".htm") ||
         strcasestr(name, ".md") ||
         strcasestr(name, "read")) {
-      color= *GREEN;
+      color= *RED;
     } else if (strcasestr(name, ".rom") ||
                strcasestr(name, "locirom") ||
                strcasestr(name, ".com") ||
@@ -126,7 +161,7 @@ int dir(char* dname, char format) {
                strcasestr(name, ".sh") ||
                strcasestr(name, ".osh") ||
                strcasestr(name, "rp6502")) {
-      color= *RED; exec= 'x';
+      color= *GREEN; exec= 'x';
     }
 
     sbytes+= (bytes= fil->d_size & 0x00ffffffL);
@@ -134,37 +169,43 @@ int dir(char* dname, char format) {
     // print file entry
     switch(format) {
 
-    case 'd': // dos style
+    case 'd': // dos style - 3 columns
       //  README  .TXT 
+      //  12345678 DIR
       // 0123456789012
       {
         char* ext= strchr(name, '.');
-        if (curx>=3*12) putchar('\n');
+        if (curx>=3*13) putchar('\n');
         if (ext) *ext= 0;
         putchar(color);
+        // TODO: if it doesn't fit it wraps w/ol color
         puts(name);
         // "tab"
-        while(curx<40 && (curx%12)<12-4)
+        while(curx<40 && (curx%12)<13-4)
           putchar(' ');
-        putchar('.');
-        puts(ext);
+        if (attr & DIR_ATTR_DIR) {
+          puts(" DIR");
+        } else if (ext) { putchar('.'); puts(ext); }
         // "tab"
-        while(curx<40 && (curx%12))
+        while(curx<40 && (curx%13))
           putchar(' ');
       } break;
         
     case 'l': // ls -l
       // drwx- 1234567 <date> <time> <filename>
       // lrwx-                       link
-      putchar((attr & DIR_ATTR_DIR)? 'd':
+      putchar(dir? 'd':
               (attr & DIR_ATTR_SYS)? 's':
               '-');
       putchar('r');
       putchar((attr & DIR_ATTR_RDO)? '-': 'w');
       putchar(exec);
       putchar('-');
-      // LOL
-      { char n= sprintf(curp, "%8lu", bytes);
+      if (dir) {
+        puts("<DIR>   ");
+      } else {
+        // LOL
+        char n= sprintf(curp, "%8lu", bytes);
         curp+= n;
         curx+= n;
       }
@@ -317,28 +358,32 @@ unsigned char Mouse(unsigned char key){
   return key;
 }
 
+// Untested: TODO: test!
 void cd(char* path, char* cd) {
   while(*cd) {
 
     switch(*cd) {
 
+    case '/': // root
+      strcpy(path, cd);
+      return;
+
+    // case '[': ???
+      break;
+
     case '.':
       // up
       if (cd[1]=='.') {
+        // backwards find last '/' by removing char by char
+        // TODO: bad algo, improve!
         while(*path && path[strlen(path)-1]!='/') {
           path[strlen(path)-1]= 0;
         }
         cd+= 2;
         if (*cd=='/') continue;
+        break;
       }
-      break; // break; wft? ..foo?
-
-    case '/': // root
-      strcpy(path, cd);
-      break;
-
-    // case '[': ???
-      break;
+      // part of file name, fall through
 
     default:
       // drive letter?
@@ -352,23 +397,6 @@ void cd(char* path, char* cd) {
     }
   }
 }
-
-#ifdef FOO
-// Returns: an mallocated string
-//          or NULL on end of file
-char* readline (const char *prompt) {
-  return NULL;
-}
-
-char* fgets(char* s, int size, FILE *stream) {
-}
-
-ssize_t getline(char** lineptr, size_t* n, FILE* stream) {
-}
-
-ssize_t getdelim(char** lineptr, size_t* n, int delim, FILE* stream) {
-}
-#endif // FOO
 
 // __LOCI_MIA:
 // xstack
@@ -397,13 +425,17 @@ ssize_t getdelim(char** lineptr, size_t* n, int delim, FILE* stream) {
 
 void main(void){
   char key;
+  char *ln=NULL;
+  unsigned int lnz= 0;
+  char *cmd, *arg1, *arg2;
 
   DID('A');
   init_display(); // inits loci font
 
   DID('B');
   clrscr();
-  printf("AtmOS v0.01 (c) Jonas S Karlsson, jsk@yesco.org\n\n");
+  //      ----------------------------------------
+  printf("AtmOS v0.02 (c) 2025 jsk@yesco.org\n\n");
   DID('C');
     
   InitKeyboard();
@@ -433,14 +465,10 @@ void main(void){
    
   while(1){
     DID('F');
-    puts("\n\n");
-    puts("Drive: a/b/c/d\n");
-    puts("Tape: t/k/m\n");
-    puts("ROM: o/r\n");
-    puts("Filter: f/i(nstall)\n");
-    puts("/ or ? unshifted...\n");
-
-    putchar('\n');
+    //    ----------------------------------------
+    puts("\n\n"
+         "ls dir cd cp pwd mkdir, (un)mount exit\n"
+         "boot exit screen\n");
 
     // TODO: read errno and print? (if not 0)
 
@@ -450,18 +478,35 @@ void main(void){
 
     DID('G');
     //key = cgetc(); // TODO: not working? reboots?
-    do { key= ReadKeyNoBounce(); } while(!key);
+    if (0) {
+      do { key= ReadKeyNoBounce(); } while(!key);
+    } else {
+      int l= editline("> ", &ln, &lnz);
+      putchar('#'); putint(l);
+      key= ln[0];
+    }
     DID('H');
+
+    // parse args
+    cmd= strtok(ln, " ");
+    arg1= strtok(NULL, " ");
+    arg2= strtok(NULL, " ");
+    
+    puts("\nCMD>"); puts(cmd);
+    puts("< ARG1>"); puts(arg1);
+    puts("< ARG2>"); puts(arg2); puts("<\n");
+    
     //key = Mouse(key);
-    clrscr();
+    //clrscr();
 
     // TODO: scroll deletes first char on last line??
     putchar(key);
-    putchar('['); putint(key); putchar(']');
+    //putchar('['); putint(key); putchar(']');
     putchar('\n');
     //DID('W');
     //waitms(1000);
 
+    // execute built-in command
     switch(key) {
 
     // - drive
@@ -524,6 +569,24 @@ void main(void){
 
       break;
 
+    case 'h': // hash ROM to find what happened
+      // prints a grid of hex xor of all values in a page
+      {
+        int i, j;
+        char h, * p= (char*)0xc000;
+        clrscr();
+        DID('h');
+        for(i=0; i<16*4; ++i) { // 16K // 64 pages
+          h= 0;
+          for(j=0; j<255; ++j) {
+            h ^= *p; ++p;
+          }
+          put2hex(h); putchar(' ');
+          if (i%8==7) putchar('\n');
+        }
+        
+      } break;
+
     // - unixy
     case 's': // clear Screen
       clrscr();
@@ -534,11 +597,6 @@ void main(void){
 //#define MIA_OP_GETCWD 0x88
       break;
 
-    case 'u': // umount / mount
-//#define MIA_OP_MOUNT 0x90
-//#define MIA_OP_UMOUNT 0x91
-      break;
-
 //    case 'd': // date
 //#define MIA_OP_CLOCK_GETRES 0x10
 //#define MIA_OP_CLOCK_GETTIME 0x11
@@ -546,8 +604,11 @@ void main(void){
 //#define MIA_OP_CLOCK_GETTIMEZONE 0x13
 //      break;
 
-    case 'c': // cp
-      //file_copy(dst, src);
+//    case 'c': // cp
+//      //file_copy(dst, src);
+//      break;
+
+    case 'c': // cd
       break;
 
     case 'd': // dir
@@ -558,13 +619,20 @@ void main(void){
       dir(loci_cfg.path, 'l');
       break;
 
-    case 'p': // pwd
+    //case 'm': // mount
+    case 'u': // umount
+//#define MIA_OP_MOUNT 0x90
+//#define MIA_OP_UMOUNT 0x91
       { char i;
-        for(i=0; i<=6; ++i) {
-          putint(i); putchar(':'); putchar(' '); puts(loci_cfg.drv_names[i]); putchar('\n');
+        for(i=0; i<=5; ++i) {
+          putchar(i<4?'A'+i: 'R'); putchar(':'); putchar(' ');
+          puts(loci_cfg.drv_names[i]); putchar('\n');
         }
-        puts("Path: "); puts(loci_cfg.path); putchar('\n');
       } break;
+      
+    case 'p': // pwd
+      puts(loci_cfg.path); putchar('\n');
+      break;
     }
 
     DID('I');
